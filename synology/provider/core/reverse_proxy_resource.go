@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -442,7 +442,7 @@ func (r *ReverseProxyResource) Create(
 		return
 	}
 
-	created, err := r.findByName(ctx, data.Name.ValueString())
+	created, err := r.waitForByName(ctx, data.Name.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read created reverse-proxy rule", err.Error())
 		return
@@ -479,6 +479,13 @@ func (r *ReverseProxyResource) Read(
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read reverse-proxy rule", err.Error())
 		return
+	}
+	if entry == nil {
+		entry, err = r.waitForByUUID(ctx, data.ID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Failed to read reverse-proxy rule", err.Error())
+			return
+		}
 	}
 	if entry == nil {
 		resp.State.RemoveResource(ctx)
@@ -532,7 +539,7 @@ func (r *ReverseProxyResource) Update(
 		return
 	}
 
-	updated, err := r.findByUUID(ctx, state.ID.ValueString())
+	updated, err := r.waitForByUUID(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to read updated reverse-proxy rule", err.Error())
 		return
@@ -588,7 +595,26 @@ func (r *ReverseProxyResource) ImportState(
 	req resource.ImportStateRequest,
 	resp *resource.ImportStateResponse,
 ) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	entry, err := r.waitForByUUID(ctx, req.ID)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to read imported reverse-proxy rule", err.Error())
+		return
+	}
+	if entry == nil {
+		resp.Diagnostics.AddError(
+			"Reverse-proxy rule not found",
+			fmt.Sprintf("No DSM reverse-proxy rule with UUID %q was found.", req.ID),
+		)
+		return
+	}
+
+	state, diags := reverseProxyModelFromAPI(*entry)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (m ReverseProxyResourceModel) toAPIEntry(
@@ -738,7 +764,9 @@ func reverseProxyModelFromAPI(
 }
 
 func (r *ReverseProxyResource) listEntries(ctx context.Context) ([]reverseProxyAPIEntry, error) {
-	resp, err := api.GetQuery[reverseProxyListResponse](r.client, ctx, struct{}{}, reverseProxyListMethod)
+	r.resetClientSessionQuery()
+	req := struct{}{}
+	resp, err := api.Get[reverseProxyListResponse](r.client, ctx, &req, reverseProxyListMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -783,14 +811,17 @@ func (r *ReverseProxyResource) createEntry(
 	ctx context.Context,
 	entry reverseProxyAPIEntry,
 ) error {
+	r.resetClientSessionQuery()
 	entryJSON, err := json.Marshal(entry)
 	if err != nil {
 		return err
 	}
 
-	_, err = api.GetQuery[struct{}](r.client, ctx, reverseProxyEntryRequest{
+	req := reverseProxyEntryRequest{
 		Entry: string(entryJSON),
-	}, reverseProxyCreateMethod)
+	}
+
+	_, err = api.Get[struct{}](r.client, ctx, &req, reverseProxyCreateMethod)
 	return err
 }
 
@@ -798,27 +829,96 @@ func (r *ReverseProxyResource) updateEntry(
 	ctx context.Context,
 	entry reverseProxyAPIEntry,
 ) error {
+	r.resetClientSessionQuery()
 	entryJSON, err := json.Marshal(entry)
 	if err != nil {
 		return err
 	}
 
-	_, err = api.GetQuery[struct{}](r.client, ctx, reverseProxyEntryRequest{
+	req := reverseProxyEntryRequest{
 		Entry: string(entryJSON),
-	}, reverseProxyUpdateMethod)
+	}
+
+	_, err = api.Get[struct{}](r.client, ctx, &req, reverseProxyUpdateMethod)
 	return err
 }
 
 func (r *ReverseProxyResource) deleteEntry(ctx context.Context, uuid string) error {
+	r.resetClientSessionQuery()
 	uuidsJSON, err := json.Marshal([]string{uuid})
 	if err != nil {
 		return err
 	}
 
-	_, err = api.GetQuery[struct{}](r.client, ctx, reverseProxyDeleteRequest{
+	req := reverseProxyDeleteRequest{
 		UUIDs: string(uuidsJSON),
-	}, reverseProxyDeleteMethod)
+	}
+
+	_, err = api.Get[struct{}](r.client, ctx, &req, reverseProxyDeleteMethod)
 	return err
+}
+
+func (r *ReverseProxyResource) resetClientSessionQuery() {
+	c, ok := r.client.(*synology.Client)
+	if !ok {
+		return
+	}
+
+	session := c.ExportSession()
+	if session.SessionID == "" && session.SynoToken == "" {
+		return
+	}
+
+	c.ImportSession(session)
+}
+
+func (r *ReverseProxyResource) waitForByUUID(
+	ctx context.Context,
+	uuid string,
+) (*reverseProxyAPIEntry, error) {
+	return r.waitForEntry(ctx, func(ctx context.Context) (*reverseProxyAPIEntry, error) {
+		return r.findByUUID(ctx, uuid)
+	})
+}
+
+func (r *ReverseProxyResource) waitForByName(
+	ctx context.Context,
+	name string,
+) (*reverseProxyAPIEntry, error) {
+	return r.waitForEntry(ctx, func(ctx context.Context) (*reverseProxyAPIEntry, error) {
+		return r.findByName(ctx, name)
+	})
+}
+
+func (r *ReverseProxyResource) waitForEntry(
+	ctx context.Context,
+	find func(context.Context) (*reverseProxyAPIEntry, error),
+) (*reverseProxyAPIEntry, error) {
+	const (
+		maxAttempts = 10
+		retryDelay  = 500 * time.Millisecond
+	)
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		entry, err := find(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if entry != nil {
+			return entry, nil
+		}
+		if attempt == maxAttempts-1 {
+			break
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(retryDelay):
+		}
+	}
+
+	return nil, nil
 }
 
 func encodeReverseProxyProtocol(protocol string) (int64, error) {
