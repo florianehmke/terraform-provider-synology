@@ -16,6 +16,14 @@ A Terraform provider for managing [Synology NAS](https://www.synology.com/dsm/so
 - **Virtualization**: Virtual machine lifecycle management
 - **Generic API**: Direct access to any Synology DSM API endpoint
 
+### Fork Additions
+
+- **Reverse Proxy**: Manage DSM reverse-proxy rules declaratively
+- **Certificate Import**: Import and update DSM certificates from NAS-side PEM files
+- **Certificate Binding**: Bind DSM services and reverse proxies to certificates
+- **Task Run**: Trigger an existing DSM scheduled task once from Terraform
+- **Path Lookup**: Read and optionally wait for File Station paths
+
 ### Architecture
 
 ```mermaid
