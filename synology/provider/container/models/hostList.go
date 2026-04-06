@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/synology-community/terraform-provider-synology/synology/models/composetypes"
+	"github.com/florianehmke/terraform-provider-synology/synology/models/composetypes"
 )
 
 // HostsList is a list of colon-separated host-ip mappings.

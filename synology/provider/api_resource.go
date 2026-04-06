@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api"
-	"github.com/synology-community/terraform-provider-synology/synology/util"
+	"github.com/florianehmke/terraform-provider-synology/synology/util"
 )
 
 type ApiResourceModel struct {
@@ -215,7 +215,7 @@ resource "synology_api" "cleanup" {
 }
 ` + "```" + `
 
-See [examples/resources/synology_api](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_api) for more examples.
+See [examples/resources/synology_api](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_api) for more examples.
 `,
 
 		Attributes: map[string]schema.Attribute{

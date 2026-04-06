@@ -30,8 +30,8 @@ import (
 	"github.com/synology-community/go-synology/pkg/api/docker"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/container/models"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/container/modifier"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/modifier"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -113,7 +113,7 @@ resource "synology_container_project" "web_app" {
 }
 ` + "```" + `
 
-See [examples/resources/synology_container_project](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_container_project) for more examples.
+See [examples/resources/synology_container_project](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_container_project) for more examples.
 `
 
 func projectExists(err error) bool {

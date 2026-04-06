@@ -1,12 +1,12 @@
 # Terraform Synology Provider - Developer Guide
 
-[![GitHub release](https://img.shields.io/github/release/synology-community/terraform-provider-synology.svg)](https://github.com/synology-community/terraform-provider-synology/releases)
-[![License](https://img.shields.io/github/license/synology-community/terraform-provider-synology)](https://github.com/synology-community/terraform-provider-synology/blob/main/LICENSE)
-[![Go Report Card](https://goreportcard.com/badge/github.com/synology-community/terraform-provider-synology)](https://goreportcard.com/report/github.com/synology-community/terraform-provider-synology)
+[![GitHub release](https://img.shields.io/github/release/florianehmke/terraform-provider-synology.svg)](https://github.com/florianehmke/terraform-provider-synology/releases)
+[![License](https://img.shields.io/github/license/florianehmke/terraform-provider-synology)](https://github.com/florianehmke/terraform-provider-synology/blob/main/LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/florianehmke/terraform-provider-synology)](https://goreportcard.com/report/github.com/florianehmke/terraform-provider-synology)
 
 A Terraform provider for managing [Synology NAS](https://www.synology.com/dsm/solution/what-is-nas/for-home) servers through the Synology DSM API. Built with [Terraform Plugin Framework](https://developer.hashicorp.com/terraform/plugin/framework) and the [go-synology](https://github.com/synology-community/go-synology) API client.
 
-> **For usage documentation**, see the [Terraform Registry documentation](https://registry.terraform.io/providers/synology-community/synology/latest/docs) or browse [examples/](./examples).
+> **For usage documentation**, see the [Terraform Registry documentation](https://registry.terraform.io/providers/florianehmke/synology/latest/docs) or browse [examples/](./examples).
 
 ## Features
 
@@ -47,7 +47,7 @@ graph TB
 
 ### For Users
 
-See the [Provider Documentation](https://registry.terraform.io/providers/synology-community/synology/latest/docs) for usage examples and configuration.
+See the [Provider Documentation](https://registry.terraform.io/providers/florianehmke/synology/latest/docs) for usage examples and configuration.
 
 **Quick Example:**
 
@@ -55,7 +55,7 @@ See the [Provider Documentation](https://registry.terraform.io/providers/synolog
 terraform {
   required_providers {
     synology = {
-      source  = "synology-community/synology"
+      source  = "florianehmke/synology"
       version = "~> 1.0"
     }
   }
@@ -92,7 +92,7 @@ resource "synology_container_project" "app" {
 
 ```bash
 # Clone the repository
-git clone https://github.com/synology-community/terraform-provider-synology.git
+git clone https://github.com/florianehmke/terraform-provider-synology.git
 cd terraform-provider-synology
 
 # Build the provider
@@ -124,6 +124,8 @@ TF_ACC=1 go test ./synology/provider/... -v -run TestAccResource_ContainerProjec
 # Show DSM container output
 TF_ACC=1 DSM_STDOUT=1 go test ./synology/provider/... -v
 ```
+
+GitHub Actions in this fork do not run acceptance tests. CI is limited to build, code generation, linting, security scanning, and compile-only `go test` execution without `TF_ACC`. Run acceptance tests manually when you need them.
 
 **How Acceptance Tests Work:**
 
@@ -299,7 +301,7 @@ test(core): add acceptance tests for package resource
 
 ### For Users
 
-- [Provider Documentation](https://registry.terraform.io/providers/synology-community/synology/latest/docs) - Complete usage guide
+- [Provider Documentation](https://registry.terraform.io/providers/florianehmke/synology/latest/docs) - Complete usage guide
 - [Resource Examples](./examples/resources) - Example configurations for each resource
 - [Data Source Examples](./examples/data-sources) - Example data source usage
 
@@ -381,10 +383,10 @@ Mozilla Public License 2.0 - see [LICENSE](LICENSE) for details.
 
 ## Support
 
-- 🐛 [Report Issues](https://github.com/synology-community/terraform-provider-synology/issues)
-- 💬 [Discussions](https://github.com/synology-community/terraform-provider-synology/discussions)
-- 📖 [Documentation](https://registry.terraform.io/providers/synology-community/synology/latest/docs)
-- 🔍 [Search Existing Issues](https://github.com/synology-community/terraform-provider-synology/issues?q=is%3Aissue)
+- 🐛 [Report Issues](https://github.com/florianehmke/terraform-provider-synology/issues)
+- 💬 [Discussions](https://github.com/florianehmke/terraform-provider-synology/discussions)
+- 📖 [Documentation](https://registry.terraform.io/providers/florianehmke/synology/latest/docs)
+- 🔍 [Search Existing Issues](https://github.com/florianehmke/terraform-provider-synology/issues?q=is%3Aissue)
 
 ## Acknowledgments
 

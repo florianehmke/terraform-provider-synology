@@ -16,7 +16,7 @@ import (
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
-	"github.com/synology-community/terraform-provider-synology/synology/util"
+	"github.com/florianehmke/terraform-provider-synology/synology/util"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.

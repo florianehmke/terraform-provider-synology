@@ -1,4 +1,4 @@
-module github.com/synology-community/terraform-provider-synology
+module github.com/florianehmke/terraform-provider-synology
 
 go 1.25.5
 

@@ -26,10 +26,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/container"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/core"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/filestation"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/virtualization"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/core"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/filestation"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization"
 )
 
 const (

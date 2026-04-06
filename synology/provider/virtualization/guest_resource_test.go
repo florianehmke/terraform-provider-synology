@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/synology-community/terraform-provider-synology/synology/acctest"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/virtualization"
+	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization"
 )
 
 type GuestResource struct{}

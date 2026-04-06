@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api/virtualization"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/virtualization/models"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization/models"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -94,7 +94,7 @@ resource "synology_virtualization_guest" "ubuntu_vm" {
 }
 ` + "```" + `
 
-See [examples/resources/synology_virtualization_guest](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_virtualization_guest) for more examples.
+See [examples/resources/synology_virtualization_guest](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_virtualization_guest) for more examples.
 `,
 
 		Attributes: map[string]schema.Attribute{

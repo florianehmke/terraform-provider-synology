@@ -29,7 +29,7 @@ description: |-
     run = true
   }
   
-  See examples/resources/synology_virtualization_guest https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_virtualization_guest for more examples.
+  See examples/resources/synology_virtualization_guest https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_virtualization_guest for more examples.
 ---
 
 # Virtualization: Guest (Resource)
@@ -65,7 +65,7 @@ resource "synology_virtualization_guest" "ubuntu_vm" {
 }
 ```
 
-See [examples/resources/synology_virtualization_guest](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_virtualization_guest) for more examples.
+See [examples/resources/synology_virtualization_guest](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_virtualization_guest) for more examples.
 
 ## Example Usage
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/synology-community/terraform-provider-synology/synology/acctest"
+	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
 )
 
 func TestAccContainerOperationAction_basic(t *testing.T) {

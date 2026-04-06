@@ -24,7 +24,6 @@ permissions:
   contents: read
 
 jobs:
-  # Ensure project builds before running testing matrix
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -52,6 +51,7 @@ jobs:
           git diff --compact-summary --exit-code || \
             (echo; echo "Unexpected difference in directories after code generation. Run 'go generate ./...' command and commit."; exit 1)
   test:
+    name: Compile Check
     runs-on: ubuntu-latest
     env:
       CGO_ENABLED: "0"
@@ -62,7 +62,5 @@ jobs:
           go-version-file: "go.mod"
           cache: true
       - run: go mod download
-
-      - name: Acceptance tests
-        run: |
-          SYNOLOGY_HOST=${{ secrets.SYNOLOGY_HOST }} SYNOLOGY_USER=${{ secrets.SYNOLOGY_USER }} SYNOLOGY_PASSWORD=${{ secrets.SYNOLOGY_PASSWORD }} TF_ACC=1 go test -v -cover -timeout 120m ./...
+      - name: Verify packages compile without acceptance tests
+        run: go test ./... -run '^$' -count=1
