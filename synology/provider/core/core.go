@@ -17,6 +17,7 @@ func Resources() []func() resource.Resource {
 		NewPackageFeedResource,
 		NewReverseProxyResource,
 		NewTaskResource,
+		NewTaskRunResource,
 		NewEventResource,
 	}
 }
