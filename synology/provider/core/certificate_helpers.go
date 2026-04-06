@@ -70,7 +70,8 @@ func listCertificates(
 	ctx context.Context,
 	client synology.Api,
 ) ([]synologyCertificate, error) {
-	resp, err := api.GetQuery[certificateListResponse](client, ctx, struct{}{}, certificateListMethod)
+	req := struct{}{}
+	resp, err := api.Get[certificateListResponse](client, ctx, &req, certificateListMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +224,7 @@ func setCertificateServiceBinding(
 		return err
 	}
 
-	_, err = api.GetQuery[struct{}](client, ctx, certificateServiceSetRequest{
+	_, err = api.Get[struct{}](client, ctx, &certificateServiceSetRequest{
 		Settings: string(settingsJSON),
 	}, certificateServiceSetMethod)
 	return err

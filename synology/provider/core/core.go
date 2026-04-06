@@ -11,6 +11,7 @@ func buildName(providerName, resourceName string) string {
 
 func Resources() []func() resource.Resource {
 	return []func() resource.Resource{
+		NewCertificateImportResource,
 		NewCertificateServiceBindingResource,
 		NewPackageResource,
 		NewPackageFeedResource,
