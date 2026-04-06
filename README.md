@@ -21,6 +21,7 @@ A Terraform provider for managing [Synology NAS](https://www.synology.com/dsm/so
 - **Reverse Proxy**: Manage DSM reverse-proxy rules declaratively
 - **Certificate Import**: Import and update DSM certificates from NAS-side PEM files
 - **Certificate Binding**: Bind DSM services and reverse proxies to certificates
+- **OIDC SSO**: Manage the DSM OpenID Connect SSO client declaratively
 - **Task Run**: Trigger an existing DSM scheduled task once from Terraform
 - **Path Lookup**: Read and optionally wait for File Station paths
 
