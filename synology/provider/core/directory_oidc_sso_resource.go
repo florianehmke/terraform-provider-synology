@@ -323,13 +323,23 @@ func (r *DirectoryOIDCSSOResource) Delete(
 		Enabled: false,
 		Profile: directoryOIDCSSOProfileName,
 	}
-	if _, err := api.Get[struct{}](r.client, ctx, &disableReq, directorySSOProfileSetMethod); err != nil {
+	if _, err := api.Get[struct{}](
+		r.client,
+		ctx,
+		&disableReq,
+		directorySSOProfileSetMethod,
+	); err != nil {
 		resp.Diagnostics.AddError("Failed to disable DSM OIDC SSO profile", err.Error())
 		return
 	}
 
 	defaultLoginReq := directorySSOSettingSetRequest{DefaultLogin: false}
-	if _, err := api.Get[struct{}](r.client, ctx, &defaultLoginReq, directorySSOSettingSetMethod); err != nil {
+	if _, err := api.Get[struct{}](
+		r.client,
+		ctx,
+		&defaultLoginReq,
+		directorySSOSettingSetMethod,
+	); err != nil {
 		resp.Diagnostics.AddError("Failed to reset DSM SSO default login", err.Error())
 		return
 	}
@@ -347,7 +357,8 @@ func (r *DirectoryOIDCSSOResource) ImportState(
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), directoryOIDCSSOResourceID)...)
+	resp.Diagnostics.Append(
+		resp.State.SetAttribute(ctx, path.Root("id"), directoryOIDCSSOResourceID)...)
 }
 
 func (r *DirectoryOIDCSSOResource) apply(
@@ -356,7 +367,9 @@ func (r *DirectoryOIDCSSOResource) apply(
 ) (DirectoryOIDCSSOResourceModel, error) {
 	if !plan.Enabled.IsUnknown() && !plan.Enabled.IsNull() && !plan.Enabled.ValueBool() &&
 		!plan.DefaultLogin.IsUnknown() && !plan.DefaultLogin.IsNull() && plan.DefaultLogin.ValueBool() {
-		return DirectoryOIDCSSOResourceModel{}, fmt.Errorf("default_login cannot be true when enabled is false")
+		return DirectoryOIDCSSOResourceModel{}, fmt.Errorf(
+			"default_login cannot be true when enabled is false",
+		)
 	}
 
 	discovery, err := r.fetchDiscoveryDocument(ctx, plan.WellKnownURL.ValueString())
@@ -384,12 +397,22 @@ func (r *DirectoryOIDCSSOResource) apply(
 		Enabled: plan.Enabled.ValueBool(),
 		Profile: directoryOIDCSSOProfileName,
 	}
-	if _, err := api.Get[struct{}](r.client, ctx, &profileReq, directorySSOProfileSetMethod); err != nil {
+	if _, err := api.Get[struct{}](
+		r.client,
+		ctx,
+		&profileReq,
+		directorySSOProfileSetMethod,
+	); err != nil {
 		return DirectoryOIDCSSOResourceModel{}, err
 	}
 
 	defaultLoginReq := directorySSOSettingSetRequest{DefaultLogin: plan.DefaultLogin.ValueBool()}
-	if _, err := api.Get[struct{}](r.client, ctx, &defaultLoginReq, directorySSOSettingSetMethod); err != nil {
+	if _, err := api.Get[struct{}](
+		r.client,
+		ctx,
+		&defaultLoginReq,
+		directorySSOSettingSetMethod,
+	); err != nil {
 		return DirectoryOIDCSSOResourceModel{}, err
 	}
 
@@ -399,24 +422,41 @@ func (r *DirectoryOIDCSSOResource) apply(
 func (r *DirectoryOIDCSSOResource) readState(
 	ctx context.Context,
 ) (DirectoryOIDCSSOResourceModel, error) {
-	oidcResp, err := api.Get[directoryOIDCSSOGetResponse](r.client, ctx, &struct{}{}, directoryOIDCSSOGetMethod)
+	oidcResp, err := api.Get[directoryOIDCSSOGetResponse](
+		r.client,
+		ctx,
+		&struct{}{},
+		directoryOIDCSSOGetMethod,
+	)
 	if err != nil {
 		return DirectoryOIDCSSOResourceModel{}, err
 	}
 
-	profileResp, err := api.Get[directorySSOProfileGetResponse](r.client, ctx, &struct{}{}, directorySSOProfileGetMethod)
+	profileResp, err := api.Get[directorySSOProfileGetResponse](
+		r.client,
+		ctx,
+		&struct{}{},
+		directorySSOProfileGetMethod,
+	)
 	if err != nil {
 		return DirectoryOIDCSSOResourceModel{}, err
 	}
 
-	settingResp, err := api.Get[directorySSOSettingGetResponse](r.client, ctx, &struct{}{}, directorySSOSettingGetMethod)
+	settingResp, err := api.Get[directorySSOSettingGetResponse](
+		r.client,
+		ctx,
+		&struct{}{},
+		directorySSOSettingGetMethod,
+	)
 	if err != nil {
 		return DirectoryOIDCSSOResourceModel{}, err
 	}
 
 	return DirectoryOIDCSSOResourceModel{
-		ID:                    types.StringValue(directoryOIDCSSOResourceID),
-		Enabled:               types.BoolValue(profileResp.Enabled && profileResp.Profile == directoryOIDCSSOProfileName),
+		ID: types.StringValue(directoryOIDCSSOResourceID),
+		Enabled: types.BoolValue(
+			profileResp.Enabled && profileResp.Profile == directoryOIDCSSOProfileName,
+		),
 		DefaultLogin:          types.BoolValue(settingResp.DefaultLogin),
 		AllowLocalUser:        types.BoolValue(oidcResp.AllowLocalUser),
 		Name:                  types.StringValue(oidcResp.Name),
@@ -447,7 +487,11 @@ func (r *DirectoryOIDCSSOResource) fetchDiscoveryDocument(
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return oidcDiscoveryDocument{}, fmt.Errorf("OIDC discovery request to %q returned %s", wellKnownURL, resp.Status)
+		return oidcDiscoveryDocument{}, fmt.Errorf(
+			"OIDC discovery request to %q returned %s",
+			wellKnownURL,
+			resp.Status,
+		)
 	}
 
 	var discovery oidcDiscoveryDocument
@@ -456,10 +500,16 @@ func (r *DirectoryOIDCSSOResource) fetchDiscoveryDocument(
 	}
 
 	if discovery.AuthorizationEndpoint == "" {
-		return oidcDiscoveryDocument{}, fmt.Errorf("OIDC discovery document at %q did not include authorization_endpoint", wellKnownURL)
+		return oidcDiscoveryDocument{}, fmt.Errorf(
+			"OIDC discovery document at %q did not include authorization_endpoint",
+			wellKnownURL,
+		)
 	}
 	if discovery.TokenEndpoint == "" {
-		return oidcDiscoveryDocument{}, fmt.Errorf("OIDC discovery document at %q did not include token_endpoint", wellKnownURL)
+		return oidcDiscoveryDocument{}, fmt.Errorf(
+			"OIDC discovery document at %q did not include token_endpoint",
+			wellKnownURL,
+		)
 	}
 
 	return discovery, nil

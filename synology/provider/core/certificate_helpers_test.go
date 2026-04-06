@@ -29,6 +29,7 @@ func TestSelectCertificateForDomainPrefersDefaultThenNewest(t *testing.T) {
 	selected := selectCertificateForDomain(certificates, "vault.synology.example.com")
 	if selected == nil {
 		t.Fatal("expected a certificate to be selected")
+		return
 	}
 
 	if selected.ID != "default-wildcard" {
@@ -46,13 +47,23 @@ func TestHostnameOrWildcardMatches(t *testing.T) {
 	}{
 		{pattern: "synology.example.com", domain: "synology.example.com", match: true},
 		{pattern: "*.synology.example.com", domain: "vault.synology.example.com", match: true},
-		{pattern: "*.synology.example.com", domain: "deep.vault.synology.example.com", match: false},
+		{
+			pattern: "*.synology.example.com",
+			domain:  "deep.vault.synology.example.com",
+			match:   false,
+		},
 		{pattern: "*.synology.example.com", domain: "synology.example.com", match: false},
 	}
 
 	for _, tt := range tests {
 		if got := hostnameOrWildcardMatches(tt.pattern, tt.domain); got != tt.match {
-			t.Fatalf("hostnameOrWildcardMatches(%q, %q) = %t, want %t", tt.pattern, tt.domain, got, tt.match)
+			t.Fatalf(
+				"hostnameOrWildcardMatches(%q, %q) = %t, want %t",
+				tt.pattern,
+				tt.domain,
+				got,
+				tt.match,
+			)
 		}
 	}
 }
@@ -60,7 +71,9 @@ func TestHostnameOrWildcardMatches(t *testing.T) {
 func TestParseCertificateBindingImportID(t *testing.T) {
 	t.Parallel()
 
-	subscriber, displayName, err := parseCertificateBindingImportID("ReverseProxy/vault.synology.example.com")
+	subscriber, displayName, err := parseCertificateBindingImportID(
+		"ReverseProxy/vault.synology.example.com",
+	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -68,7 +81,9 @@ func TestParseCertificateBindingImportID(t *testing.T) {
 		t.Fatalf("unexpected parsed import id: %q %q", subscriber, displayName)
 	}
 
-	subscriber, displayName, err = parseCertificateBindingImportID("ReverseProxy:minio.synology.example.com")
+	subscriber, displayName, err = parseCertificateBindingImportID(
+		"ReverseProxy:minio.synology.example.com",
+	)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

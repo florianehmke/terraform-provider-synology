@@ -32,12 +32,12 @@ type CertificateImportResourceModel struct {
 }
 
 type certificateImportRequest struct {
-	ID        string    `form:"id" url:"id,omitempty"`
-	Desc      string    `form:"desc" url:"desc,omitempty"`
+	ID        string    `form:"id"         url:"id,omitempty"`
+	Desc      string    `form:"desc"       url:"desc,omitempty"`
 	AsDefault bool      `form:"as_default" url:"as_default,omitempty"`
-	Key       form.File `form:"key" kind:"file"`
-	Cert      form.File `form:"cert" kind:"file"`
-	InterCert form.File `form:"inter_cert" kind:"file"`
+	Key       form.File `form:"key"                                   kind:"file"`
+	Cert      form.File `form:"cert"                                  kind:"file"`
+	InterCert form.File `form:"inter_cert"                            kind:"file"`
 }
 
 type certificateImportResponse struct {
@@ -304,7 +304,8 @@ func (r *CertificateImportResource) ImportState(
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), certificate.ID)...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("description"), certificate.Desc)...)
+	resp.Diagnostics.Append(
+		resp.State.SetAttribute(ctx, path.Root("description"), certificate.Desc)...)
 }
 
 func (r *CertificateImportResource) importCertificate(
@@ -316,7 +317,12 @@ func (r *CertificateImportResource) importCertificate(
 		return err
 	}
 
-	if _, err := api.PostFile[certificateImportResponse](r.client, ctx, &request, certificateImportMethod); err != nil {
+	if _, err := api.PostFile[certificateImportResponse](
+		r.client,
+		ctx,
+		&request,
+		certificateImportMethod,
+	); err != nil {
 		return err
 	}
 
@@ -326,7 +332,10 @@ func (r *CertificateImportResource) importCertificate(
 			return err
 		}
 		if certificate == nil {
-			return fmt.Errorf("DSM did not return a certificate with description %q after import", data.Description.ValueString())
+			return fmt.Errorf(
+				"DSM did not return a certificate with description %q after import",
+				data.Description.ValueString(),
+			)
 		}
 		data.ID = types.StringValue(certificate.ID)
 	}
@@ -340,21 +349,40 @@ func (r *CertificateImportResource) buildImportRequest(
 ) (certificateImportRequest, error) {
 	certFile, err := r.fileStation.Download(ctx, data.CertificatePath.ValueString(), "download")
 	if err != nil {
-		return certificateImportRequest{}, fmt.Errorf("failed to read NAS certificate file %q: %w", data.CertificatePath.ValueString(), err)
+		return certificateImportRequest{}, fmt.Errorf(
+			"failed to read NAS certificate file %q: %w",
+			data.CertificatePath.ValueString(),
+			err,
+		)
 	}
 	keyFile, err := r.fileStation.Download(ctx, data.PrivateKeyPath.ValueString(), "download")
 	if err != nil {
-		return certificateImportRequest{}, fmt.Errorf("failed to read NAS private key file %q: %w", data.PrivateKeyPath.ValueString(), err)
+		return certificateImportRequest{}, fmt.Errorf(
+			"failed to read NAS private key file %q: %w",
+			data.PrivateKeyPath.ValueString(),
+			err,
+		)
 	}
-	intermediateFile, err := r.fileStation.Download(ctx, data.IntermediateCertificatePath.ValueString(), "download")
+	intermediateFile, err := r.fileStation.Download(
+		ctx,
+		data.IntermediateCertificatePath.ValueString(),
+		"download",
+	)
 	if err != nil {
-		return certificateImportRequest{}, fmt.Errorf("failed to read NAS intermediate certificate file %q: %w", data.IntermediateCertificatePath.ValueString(), err)
+		return certificateImportRequest{}, fmt.Errorf(
+			"failed to read NAS intermediate certificate file %q: %w",
+			data.IntermediateCertificatePath.ValueString(),
+			err,
+		)
 	}
 
 	if err := validateCertificatePEM(certFile.Content, "certificate"); err != nil {
 		return certificateImportRequest{}, err
 	}
-	if err := validateCertificatePEM(intermediateFile.Content, "intermediate certificate"); err != nil {
+	if err := validateCertificatePEM(
+		intermediateFile.Content,
+		"intermediate certificate",
+	); err != nil {
 		return certificateImportRequest{}, err
 	}
 	if err := validatePrivateKeyPEM(keyFile.Content); err != nil {
@@ -406,7 +434,10 @@ func (r *CertificateImportResource) refreshState(
 
 	sans, diags := types.ListValueFrom(ctx, types.StringType, selected.Subject.SubAltName)
 	if diags.HasError() {
-		return CertificateImportResourceModel{}, fmt.Errorf("failed to build certificate SAN list: %s", diags.Errors()[0].Detail())
+		return CertificateImportResourceModel{}, fmt.Errorf(
+			"failed to build certificate SAN list: %s",
+			diags.Errors()[0].Detail(),
+		)
 	}
 
 	data.ID = types.StringValue(selected.ID)
@@ -420,7 +451,10 @@ func (r *CertificateImportResource) refreshState(
 	return data, nil
 }
 
-func (r *CertificateImportResource) findByID(ctx context.Context, id string) (*synologyCertificate, error) {
+func (r *CertificateImportResource) findByID(
+	ctx context.Context,
+	id string,
+) (*synologyCertificate, error) {
 	certificates, err := listCertificates(ctx, r.client)
 	if err != nil {
 		return nil, err
@@ -434,7 +468,10 @@ func (r *CertificateImportResource) findByID(ctx context.Context, id string) (*s
 	return certificate, nil
 }
 
-func (r *CertificateImportResource) findByDescription(ctx context.Context, description string) (*synologyCertificate, error) {
+func (r *CertificateImportResource) findByDescription(
+	ctx context.Context,
+	description string,
+) (*synologyCertificate, error) {
 	certificates, err := listCertificates(ctx, r.client)
 	if err != nil {
 		return nil, err

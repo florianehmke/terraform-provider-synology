@@ -426,7 +426,11 @@ func (r *ReverseProxyResource) Create(
 	if existing != nil {
 		resp.Diagnostics.AddError(
 			"Reverse-proxy rule already exists",
-			fmt.Sprintf("A DSM reverse-proxy rule named %q already exists with UUID %q.", existing.Name, existing.UUID),
+			fmt.Sprintf(
+				"A DSM reverse-proxy rule named %q already exists with UUID %q.",
+				existing.Name,
+				existing.UUID,
+			),
 		)
 		return
 	}
@@ -450,7 +454,10 @@ func (r *ReverseProxyResource) Create(
 	if created == nil {
 		resp.Diagnostics.AddError(
 			"Failed to read created reverse-proxy rule",
-			fmt.Sprintf("DSM did not return a reverse-proxy rule named %q after creation.", data.Name.ValueString()),
+			fmt.Sprintf(
+				"DSM did not return a reverse-proxy rule named %q after creation.",
+				data.Name.ValueString(),
+			),
 		)
 		return
 	}
@@ -522,7 +529,11 @@ func (r *ReverseProxyResource) Update(
 	if existing != nil && existing.UUID != state.ID.ValueString() {
 		resp.Diagnostics.AddError(
 			"Reverse-proxy rule name already in use",
-			fmt.Sprintf("A different DSM reverse-proxy rule already uses the name %q (UUID %q).", existing.Name, existing.UUID),
+			fmt.Sprintf(
+				"A different DSM reverse-proxy rule already uses the name %q (UUID %q).",
+				existing.Name,
+				existing.UUID,
+			),
 		)
 		return
 	}
@@ -547,7 +558,10 @@ func (r *ReverseProxyResource) Update(
 	if updated == nil {
 		resp.Diagnostics.AddError(
 			"Failed to read updated reverse-proxy rule",
-			fmt.Sprintf("DSM did not return reverse-proxy rule UUID %q after update.", state.ID.ValueString()),
+			fmt.Sprintf(
+				"DSM did not return reverse-proxy rule UUID %q after update.",
+				state.ID.ValueString(),
+			),
 		)
 		return
 	}

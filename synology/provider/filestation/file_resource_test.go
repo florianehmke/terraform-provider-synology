@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
+	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 type FileResource struct{}

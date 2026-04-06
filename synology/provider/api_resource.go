@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/util"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -15,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api"
-	"github.com/florianehmke/terraform-provider-synology/synology/util"
 )
 
 type ApiResourceModel struct {

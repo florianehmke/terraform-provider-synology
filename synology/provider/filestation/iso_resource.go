@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/util"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,7 +17,6 @@ import (
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
-	"github.com/florianehmke/terraform-provider-synology/synology/util"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.

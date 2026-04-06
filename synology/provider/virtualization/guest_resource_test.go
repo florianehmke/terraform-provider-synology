@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization"
 )
 
 type GuestResource struct{}

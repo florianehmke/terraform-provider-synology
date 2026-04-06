@@ -12,8 +12,10 @@ import (
 	"github.com/synology-community/go-synology/pkg/api/core"
 )
 
-var _ resource.Resource = &TaskRunResource{}
-var _ resource.ResourceWithImportState = &TaskRunResource{}
+var (
+	_ resource.Resource                = &TaskRunResource{}
+	_ resource.ResourceWithImportState = &TaskRunResource{}
+)
 
 func NewTaskRunResource() resource.Resource {
 	return &TaskRunResource{}
@@ -203,7 +205,10 @@ func (r *TaskRunResource) ImportState(
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func (r *TaskRunResource) findTaskByName(ctx context.Context, taskName string) (*core.TaskResult, error) {
+func (r *TaskRunResource) findTaskByName(
+	ctx context.Context,
+	taskName string,
+) (*core.TaskResult, error) {
 	tasks, err := r.coreClient.TaskList(ctx, core.ListTaskRequest{})
 	if err != nil {
 		return nil, err

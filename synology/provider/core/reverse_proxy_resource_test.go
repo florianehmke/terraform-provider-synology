@@ -72,22 +72,46 @@ func TestReverseProxyModelRoundTrip(t *testing.T) {
 		t.Fatalf("name mismatch: got %q, want %q", roundTripped.Name, apiEntry.Name)
 	}
 	if roundTripped.Description != apiEntry.Description {
-		t.Fatalf("description mismatch: got %q, want %q", roundTripped.Description, apiEntry.Description)
+		t.Fatalf(
+			"description mismatch: got %q, want %q",
+			roundTripped.Description,
+			apiEntry.Description,
+		)
 	}
 	if roundTripped.Frontend.FQDN != apiEntry.Frontend.FQDN {
-		t.Fatalf("frontend host mismatch: got %q, want %q", roundTripped.Frontend.FQDN, apiEntry.Frontend.FQDN)
+		t.Fatalf(
+			"frontend host mismatch: got %q, want %q",
+			roundTripped.Frontend.FQDN,
+			apiEntry.Frontend.FQDN,
+		)
 	}
 	if roundTripped.Backend.FQDN != apiEntry.Backend.FQDN {
-		t.Fatalf("backend host mismatch: got %q, want %q", roundTripped.Backend.FQDN, apiEntry.Backend.FQDN)
+		t.Fatalf(
+			"backend host mismatch: got %q, want %q",
+			roundTripped.Backend.FQDN,
+			apiEntry.Backend.FQDN,
+		)
 	}
 	if roundTripped.Frontend.Protocol != apiEntry.Frontend.Protocol {
-		t.Fatalf("frontend protocol mismatch: got %d, want %d", roundTripped.Frontend.Protocol, apiEntry.Frontend.Protocol)
+		t.Fatalf(
+			"frontend protocol mismatch: got %d, want %d",
+			roundTripped.Frontend.Protocol,
+			apiEntry.Frontend.Protocol,
+		)
 	}
 	if roundTripped.Backend.Protocol != apiEntry.Backend.Protocol {
-		t.Fatalf("backend protocol mismatch: got %d, want %d", roundTripped.Backend.Protocol, apiEntry.Backend.Protocol)
+		t.Fatalf(
+			"backend protocol mismatch: got %d, want %d",
+			roundTripped.Backend.Protocol,
+			apiEntry.Backend.Protocol,
+		)
 	}
 	if len(roundTripped.CustomizeHeaders) != len(apiEntry.CustomizeHeaders) {
-		t.Fatalf("custom header count mismatch: got %d, want %d", len(roundTripped.CustomizeHeaders), len(apiEntry.CustomizeHeaders))
+		t.Fatalf(
+			"custom header count mismatch: got %d, want %d",
+			len(roundTripped.CustomizeHeaders),
+			len(apiEntry.CustomizeHeaders),
+		)
 	}
 }
 

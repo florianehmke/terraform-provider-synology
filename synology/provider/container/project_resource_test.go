@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
 )
 
 type ProjectResource struct{}

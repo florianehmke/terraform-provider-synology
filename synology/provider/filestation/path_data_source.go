@@ -128,7 +128,8 @@ func (d *PathDataSource) Read(
 		return
 	}
 
-	waitForExists := !data.WaitForExists.IsNull() && !data.WaitForExists.IsUnknown() && data.WaitForExists.ValueBool()
+	waitForExists := !data.WaitForExists.IsNull() && !data.WaitForExists.IsUnknown() &&
+		data.WaitForExists.ValueBool()
 	waitTimeout := fileStationPathWaitTimeout(waitForExists, data.WaitTimeoutSeconds)
 
 	file, exists, err := d.readPath(ctx, data.Path.ValueString(), waitForExists, waitTimeout)
@@ -196,7 +197,11 @@ func (d *PathDataSource) readPath(
 				return file, true, nil
 			}
 			if time.Now().After(deadline) {
-				return nil, false, fmt.Errorf("timed out waiting for File Station path %q to exist after %s", path, waitTimeout)
+				return nil, false, fmt.Errorf(
+					"timed out waiting for File Station path %q to exist after %s",
+					path,
+					waitTimeout,
+				)
 			}
 		}
 	}

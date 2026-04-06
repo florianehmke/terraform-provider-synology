@@ -11,6 +11,10 @@ import (
 	"time"
 
 	"github.com/99designs/keyring"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/core"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/filestation"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -26,10 +30,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/container"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/core"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/filestation"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization"
 )
 
 const (

@@ -5,8 +5,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/florianehmke/terraform-provider-synology/synology/provider"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 )
 
 //go:generate go tool tfplugindocs generate -provider-name synology

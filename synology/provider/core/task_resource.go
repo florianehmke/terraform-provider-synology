@@ -447,12 +447,36 @@ func (p *TaskResource) getTaskDetail(ctx context.Context, id int64) (*taskDetail
 
 func newTaskSchedule() core.TaskSchedule {
 	return core.TaskSchedule{
-		DateType:              0,
-		WeekDay:               "0,1,2,3,4,5,6",
-		MonthlyWeek:           []string{},
-		RepeatDate:            1001,
-		RepeatMinStoreConfig:  []int64{1, 5, 10, 15, 20, 30},
-		RepeatHourStoreConfig: []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+		DateType:             0,
+		WeekDay:              "0,1,2,3,4,5,6",
+		MonthlyWeek:          []string{},
+		RepeatDate:           1001,
+		RepeatMinStoreConfig: []int64{1, 5, 10, 15, 20, 30},
+		RepeatHourStoreConfig: []int64{
+			1,
+			2,
+			3,
+			4,
+			5,
+			6,
+			7,
+			8,
+			9,
+			10,
+			11,
+			12,
+			13,
+			14,
+			15,
+			16,
+			17,
+			18,
+			19,
+			20,
+			21,
+			22,
+			23,
+		},
 	}
 }
 
@@ -504,7 +528,10 @@ func parseTaskScheduleSpec(spec string) (core.TaskSchedule, error) {
 
 	parts := strings.Fields(spec)
 	if len(parts) != 5 {
-		return core.TaskSchedule{}, fmt.Errorf("unsupported task schedule %q: expected 5 fields", spec)
+		return core.TaskSchedule{}, fmt.Errorf(
+			"unsupported task schedule %q: expected 5 fields",
+			spec,
+		)
 	}
 
 	minute, err := parseTaskScheduleNumber(parts[0], 0, 59, "minute")
@@ -516,10 +543,16 @@ func parseTaskScheduleSpec(spec string) (core.TaskSchedule, error) {
 		return core.TaskSchedule{}, err
 	}
 	if parts[2] != "*" {
-		return core.TaskSchedule{}, fmt.Errorf("unsupported task schedule %q: day-of-month must be *", spec)
+		return core.TaskSchedule{}, fmt.Errorf(
+			"unsupported task schedule %q: day-of-month must be *",
+			spec,
+		)
 	}
 	if parts[3] != "*" {
-		return core.TaskSchedule{}, fmt.Errorf("unsupported task schedule %q: month must be *", spec)
+		return core.TaskSchedule{}, fmt.Errorf(
+			"unsupported task schedule %q: month must be *",
+			spec,
+		)
 	}
 	weekDay, err := parseTaskScheduleWeekDay(parts[4])
 	if err != nil {
@@ -533,12 +566,17 @@ func parseTaskScheduleSpec(spec string) (core.TaskSchedule, error) {
 	return schedule, nil
 }
 
-func parseTaskScheduleNumber(value string, min int64, max int64, label string) (int64, error) {
+func parseTaskScheduleNumber(
+	value string,
+	minValue int64,
+	maxValue int64,
+	label string,
+) (int64, error) {
 	parsed, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid %s %q", label, value)
 	}
-	if parsed < min || parsed > max {
+	if parsed < minValue || parsed > maxValue {
 		return 0, fmt.Errorf("invalid %s %q", label, value)
 	}
 	return parsed, nil
@@ -571,7 +609,9 @@ func renderTaskSchedule(schedule core.TaskSchedule) (string, error) {
 		return "", fmt.Errorf("unsupported DSM task schedule: invalid hour/minute")
 	}
 	if schedule.RepeatHour != 0 || schedule.RepeatMin != 0 {
-		return "", fmt.Errorf("unsupported DSM task schedule: repeating intervals are not supported")
+		return "", fmt.Errorf(
+			"unsupported DSM task schedule: repeating intervals are not supported",
+		)
 	}
 	if schedule.DateType != 0 {
 		return "", fmt.Errorf("unsupported DSM task schedule: date_type %d", schedule.DateType)
@@ -607,7 +647,9 @@ func taskScheduleMatchesSpec(spec string, schedule core.TaskSchedule) bool {
 }
 
 func cronTaskSchedulePattern() *regexp.Regexp {
-	return regexp.MustCompile(`^(@daily|@weekly|([0-5]?\d)\s+([01]?\d|2[0-3])\s+\*\s+\*\s+(\*|[0-6](,[0-6])*))$`)
+	return regexp.MustCompile(
+		`^(@daily|@weekly|([0-5]?\d)\s+([01]?\d|2[0-3])\s+\*\s+\*\s+(\*|[0-6](,[0-6])*))$`,
+	)
 }
 
 func isTaskNotFound(err error) bool {

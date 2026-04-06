@@ -7,11 +7,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
-	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
 )
 
 func TestAccISOFunction_Null(t *testing.T) {

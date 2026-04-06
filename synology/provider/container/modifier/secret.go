@@ -4,12 +4,12 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
 )
 
 // SetSecretPathsFromContent returns a plan modifier that populates secret file paths

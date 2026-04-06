@@ -129,8 +129,10 @@ func (d *CertificateDataSource) Read(
 		return
 	}
 
-	hasCertificateID := !data.CertificateID.IsNull() && !data.CertificateID.IsUnknown() && data.CertificateID.ValueString() != ""
-	hasDomain := !data.Domain.IsNull() && !data.Domain.IsUnknown() && data.Domain.ValueString() != ""
+	hasCertificateID := !data.CertificateID.IsNull() && !data.CertificateID.IsUnknown() &&
+		data.CertificateID.ValueString() != ""
+	hasDomain := !data.Domain.IsNull() && !data.Domain.IsUnknown() &&
+		data.Domain.ValueString() != ""
 
 	if hasCertificateID == hasDomain {
 		resp.Diagnostics.AddError(
@@ -152,7 +154,10 @@ func (d *CertificateDataSource) Read(
 		if selected == nil {
 			resp.Diagnostics.AddError(
 				"Certificate not found",
-				fmt.Sprintf("No DSM certificate with id %q was found.", data.CertificateID.ValueString()),
+				fmt.Sprintf(
+					"No DSM certificate with id %q was found.",
+					data.CertificateID.ValueString(),
+				),
 			)
 			return
 		}
@@ -161,7 +166,10 @@ func (d *CertificateDataSource) Read(
 		if selected == nil {
 			resp.Diagnostics.AddError(
 				"Certificate not found",
-				fmt.Sprintf("No non-broken DSM certificate matched domain %q.", data.Domain.ValueString()),
+				fmt.Sprintf(
+					"No non-broken DSM certificate matched domain %q.",
+					data.Domain.ValueString(),
+				),
 			)
 			return
 		}

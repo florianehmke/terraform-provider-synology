@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/modifier"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -30,8 +32,6 @@ import (
 	"github.com/synology-community/go-synology/pkg/api/docker"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/modifier"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.

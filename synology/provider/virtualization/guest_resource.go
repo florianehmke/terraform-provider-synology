@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization/models"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -20,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api/virtualization"
-	"github.com/florianehmke/terraform-provider-synology/synology/provider/virtualization/models"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.

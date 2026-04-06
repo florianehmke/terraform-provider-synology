@@ -4,9 +4,9 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/models/composetypes"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/florianehmke/terraform-provider-synology/synology/models/composetypes"
 )
 
 type ComposeContent struct {

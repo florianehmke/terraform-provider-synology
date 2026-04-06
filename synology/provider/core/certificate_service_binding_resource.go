@@ -217,8 +217,17 @@ func (r *CertificateServiceBindingResource) Delete(
 	}
 
 	if currentCertificate.ID != defaultCertificate.ID {
-		if err := setCertificateServiceBinding(ctx, r.client, rawService, currentCertificate.ID, defaultCertificate.ID); err != nil {
-			resp.Diagnostics.AddError("Failed to restore DSM default certificate binding", err.Error())
+		if err := setCertificateServiceBinding(
+			ctx,
+			r.client,
+			rawService,
+			currentCertificate.ID,
+			defaultCertificate.ID,
+		); err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to restore DSM default certificate binding",
+				err.Error(),
+			)
 			return
 		}
 	}
@@ -237,7 +246,12 @@ func (r *CertificateServiceBindingResource) ImportState(
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), buildCertificateBindingID(subscriber, displayName))...)
+	resp.Diagnostics.Append(
+		resp.State.SetAttribute(
+			ctx,
+			path.Root("id"),
+			buildCertificateBindingID(subscriber, displayName),
+		)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("subscriber"), subscriber)...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("display_name"), displayName)...)
 }
@@ -253,7 +267,10 @@ func (r *CertificateServiceBindingResource) ensureBinding(
 
 	targetCertificate := findCertificateByID(certificates, data.CertificateID.ValueString())
 	if targetCertificate == nil {
-		return fmt.Errorf("no DSM certificate with id %q was found", data.CertificateID.ValueString())
+		return fmt.Errorf(
+			"no DSM certificate with id %q was found",
+			data.CertificateID.ValueString(),
+		)
 	}
 	if targetCertificate.IsBroken {
 		return fmt.Errorf("DSM certificate %q is marked as broken", targetCertificate.ID)
@@ -276,7 +293,13 @@ func (r *CertificateServiceBindingResource) ensureBinding(
 	}
 
 	if currentCertificate.ID != targetCertificate.ID {
-		if err := setCertificateServiceBinding(ctx, r.client, rawService, currentCertificate.ID, targetCertificate.ID); err != nil {
+		if err := setCertificateServiceBinding(
+			ctx,
+			r.client,
+			rawService,
+			currentCertificate.ID,
+			targetCertificate.ID,
+		); err != nil {
 			return err
 		}
 	}

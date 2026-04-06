@@ -98,7 +98,10 @@ func findDefaultCertificate(certificates []synologyCertificate) *synologyCertifi
 	return nil
 }
 
-func selectCertificateForDomain(certificates []synologyCertificate, domain string) *synologyCertificate {
+func selectCertificateForDomain(
+	certificates []synologyCertificate,
+	domain string,
+) *synologyCertificate {
 	candidates := make([]synologyCertificate, 0)
 	for _, certificate := range certificates {
 		if certificate.IsBroken {
@@ -142,7 +145,8 @@ func certificateMatchesDomain(certificate synologyCertificate, domain string) bo
 		return false
 	}
 
-	if certificate.Subject.CommonName != "" && hostnameOrWildcardMatches(certificate.Subject.CommonName, domain) {
+	if certificate.Subject.CommonName != "" &&
+		hostnameOrWildcardMatches(certificate.Subject.CommonName, domain) {
 		return true
 	}
 
