@@ -178,7 +178,10 @@ func normalizeProjectStreamError(err error) error {
 	return err
 }
 
-func projectServicePortalValue(ctx context.Context, proj *docker.Project) (types.Object, diag.Diagnostics) {
+func projectServicePortalValue(
+	ctx context.Context,
+	proj *docker.Project,
+) (types.Object, diag.Diagnostics) {
 	if !proj.EnableServicePortal &&
 		proj.ServicePortalName == "" &&
 		proj.ServicePortalPort == 0 &&

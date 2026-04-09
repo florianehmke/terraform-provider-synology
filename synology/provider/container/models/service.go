@@ -1395,7 +1395,11 @@ func (m *Service) FromComposeConfig(
 					network.Aliases = aliasesValue
 				}
 			} else if service.Name != "" {
-				aliasesValue, diags := types.SetValueFrom(ctx, types.StringType, []string{service.Name})
+				aliasesValue, diags := types.SetValueFrom(
+					ctx,
+					types.StringType,
+					[]string{service.Name},
+				)
 				if diags.HasError() {
 					d = append(d, diags...)
 				} else {
