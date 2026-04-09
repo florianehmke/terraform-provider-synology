@@ -305,7 +305,10 @@ func (f *ProjectResource) refreshProjectConfigContent(
 	ctx context.Context,
 	data *models.ProjectResourceModel,
 ) (diags diag.Diagnostics) {
-	if data.SharePath.IsNull() || data.SharePath.IsUnknown() || data.Configs.IsNull() || data.Configs.IsUnknown() {
+	if data.SharePath.IsNull() ||
+		data.SharePath.IsUnknown() ||
+		data.Configs.IsNull() ||
+		data.Configs.IsUnknown() {
 		return
 	}
 

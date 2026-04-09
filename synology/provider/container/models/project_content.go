@@ -185,8 +185,12 @@ func mergeExistingSecretContent(
 			continue
 		}
 
-		if currentValue.Content.IsNull() || currentValue.Content.IsUnknown() || currentValue.Content.ValueString() == "" {
-			if !existingValue.Content.IsNull() && !existingValue.Content.IsUnknown() && existingValue.Content.ValueString() != "" {
+		if currentValue.Content.IsNull() ||
+			currentValue.Content.IsUnknown() ||
+			currentValue.Content.ValueString() == "" {
+			if !existingValue.Content.IsNull() &&
+				!existingValue.Content.IsUnknown() &&
+				existingValue.Content.ValueString() != "" {
 				currentValue.Content = existingValue.Content
 				currentValues[key] = currentValue
 				changed = true
