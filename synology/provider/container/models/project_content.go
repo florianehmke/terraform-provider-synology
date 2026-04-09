@@ -211,7 +211,10 @@ func mergeExistingSecretContent(
 	return diags
 }
 
-func servicesMapFromCompose(ctx context.Context, services composetypes.Services) (types.Map, diag.Diagnostics) {
+func servicesMapFromCompose(
+	ctx context.Context,
+	services composetypes.Services,
+) (types.Map, diag.Diagnostics) {
 	if len(services) == 0 {
 		return types.MapNull(Service{}.ModelType()), nil
 	}
@@ -231,7 +234,10 @@ func servicesMapFromCompose(ctx context.Context, services composetypes.Services)
 	return mapValue, diags
 }
 
-func networksMapFromCompose(ctx context.Context, networks composetypes.Networks) (types.Map, diag.Diagnostics) {
+func networksMapFromCompose(
+	ctx context.Context,
+	networks composetypes.Networks,
+) (types.Map, diag.Diagnostics) {
 	if len(networks) == 0 {
 		return types.MapNull(Network{}.ModelType()), nil
 	}
@@ -251,7 +257,10 @@ func networksMapFromCompose(ctx context.Context, networks composetypes.Networks)
 	return mapValue, diags
 }
 
-func volumesMapFromCompose(ctx context.Context, volumes composetypes.Volumes) (types.Map, diag.Diagnostics) {
+func volumesMapFromCompose(
+	ctx context.Context,
+	volumes composetypes.Volumes,
+) (types.Map, diag.Diagnostics) {
 	if len(volumes) == 0 {
 		return types.MapNull(Volume{}.ModelType()), nil
 	}
@@ -271,7 +280,10 @@ func volumesMapFromCompose(ctx context.Context, volumes composetypes.Volumes) (t
 	return mapValue, diags
 }
 
-func configsMapFromCompose(ctx context.Context, configs composetypes.Configs) (types.Map, diag.Diagnostics) {
+func configsMapFromCompose(
+	ctx context.Context,
+	configs composetypes.Configs,
+) (types.Map, diag.Diagnostics) {
 	if len(configs) == 0 {
 		return types.MapNull(Config{}.ModelType()), nil
 	}
@@ -291,7 +303,10 @@ func configsMapFromCompose(ctx context.Context, configs composetypes.Configs) (t
 	return mapValue, diags
 }
 
-func secretsMapFromCompose(ctx context.Context, secrets composetypes.Secrets) (types.Map, diag.Diagnostics) {
+func secretsMapFromCompose(
+	ctx context.Context,
+	secrets composetypes.Secrets,
+) (types.Map, diag.Diagnostics) {
 	if len(secrets) == 0 {
 		return types.MapNull(Secret{}.ModelType()), nil
 	}
