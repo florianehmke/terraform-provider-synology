@@ -23,10 +23,10 @@ func (m IPAMPool) ModelType() attr.Type {
 
 func (m IPAMPool) AttrType() map[string]attr.Type {
 	return map[string]attr.Type{
-		"subnet":      types.StringType,
-		"gateway":     types.StringType,
-		"ip_range":    types.StringType,
-		"aux_address": types.MapType{ElemType: types.StringType},
+		"subnet":        types.StringType,
+		"gateway":       types.StringType,
+		"ip_range":      types.StringType,
+		"aux_addresses": types.MapType{ElemType: types.StringType},
 	}
 }
 
@@ -159,35 +159,55 @@ func (m *Network) FromComposeConfig(
 	ctx context.Context,
 	network *composetypes.NetworkConfig,
 ) (d diag.Diagnostics) {
-	m.Name = types.StringValue(network.Name)
-	m.Driver = types.StringValue(network.Driver)
-	m.External = types.BoolValue(bool(network.External))
 	m.DriverOpts = types.MapNull(types.StringType)
+	m.Ipam = types.ObjectNull(IPAMConfig{}.AttrType())
 	m.Labels = types.MapNull(types.StringType)
-	m.Attachable = types.BoolValue(network.Attachable)
-	m.Internal = types.BoolValue(network.Internal)
 	m.EnableIPv6 = types.BoolPointerValue(network.EnableIPv6)
 
-	driverOpts := map[string]types.String{}
-	for k, v := range network.DriverOpts {
-		driverOpts[k] = types.StringValue(v)
-	}
-	driverOptsValue, diags := types.MapValueFrom(ctx, types.StringType, driverOpts)
-	if diags.HasError() {
-		d.Append(diags...)
-	} else {
-		m.DriverOpts = driverOptsValue
+	if network.Name != "" {
+		m.Name = types.StringValue(network.Name)
 	}
 
-	labels := map[string]types.String{}
-	for k, v := range network.Labels {
-		labels[k] = types.StringValue(v)
+	if network.Driver != "" {
+		m.Driver = types.StringValue(network.Driver)
 	}
-	labelsValue, diags := types.MapValueFrom(ctx, types.StringType, labels)
-	if diags.HasError() {
-		d.Append(diags...)
-	} else {
-		m.Labels = labelsValue
+
+	if bool(network.External) {
+		m.External = types.BoolValue(true)
+	}
+
+	if network.Attachable {
+		m.Attachable = types.BoolValue(true)
+	}
+
+	if network.Internal {
+		m.Internal = types.BoolValue(true)
+	}
+
+	if len(network.DriverOpts) > 0 {
+		driverOpts := map[string]types.String{}
+		for k, v := range network.DriverOpts {
+			driverOpts[k] = types.StringValue(v)
+		}
+		driverOptsValue, diags := types.MapValueFrom(ctx, types.StringType, driverOpts)
+		if diags.HasError() {
+			d.Append(diags...)
+		} else {
+			m.DriverOpts = driverOptsValue
+		}
+	}
+
+	if len(network.Labels) > 0 {
+		labels := map[string]types.String{}
+		for k, v := range network.Labels {
+			labels[k] = types.StringValue(v)
+		}
+		labelsValue, diags := types.MapValueFrom(ctx, types.StringType, labels)
+		if diags.HasError() {
+			d.Append(diags...)
+		} else {
+			m.Labels = labelsValue
+		}
 	}
 	return
 }

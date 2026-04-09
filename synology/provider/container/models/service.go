@@ -212,9 +212,10 @@ func (m ServiceVolume) AttrType() map[string]attr.Type {
 }
 
 type Ulimit struct {
-	Value types.Int64 `tfsdk:"single"`
-	Soft  types.Int64 `tfsdk:"soft"`
-	Hard  types.Int64 `tfsdk:"hard"`
+	Name  types.String `tfsdk:"name"`
+	Value types.Int64  `tfsdk:"value"`
+	Soft  types.Int64  `tfsdk:"soft"`
+	Hard  types.Int64  `tfsdk:"hard"`
 }
 
 func (m Ulimit) ModelType() attr.Type {
@@ -223,9 +224,10 @@ func (m Ulimit) ModelType() attr.Type {
 
 func (m Ulimit) AttrType() map[string]attr.Type {
 	return map[string]attr.Type{
-		"single": types.Int64Type,
-		"soft":   types.Int64Type,
-		"hard":   types.Int64Type,
+		"name":  types.StringType,
+		"value": types.Int64Type,
+		"soft":  types.Int64Type,
+		"hard":  types.Int64Type,
 	}
 }
 
@@ -322,7 +324,6 @@ func (m Service) ModelType() attr.Type {
 
 func (m Service) AttrType() map[string]attr.Type {
 	return map[string]attr.Type{
-		"name":           types.StringType,
 		"image":          types.StringType,
 		"container_name": types.StringType,
 		"hostname":       types.StringType,
@@ -338,7 +339,7 @@ func (m Service) AttrType() map[string]attr.Type {
 		"userns_mode":    types.StringType,
 		"platform":       types.StringType,
 		"init":           types.BoolType,
-		"ports":          Port{}.ModelType(),
+		"ports":          types.ListType{ElemType: Port{}.ModelType()},
 		"mem_limit":      types.StringType,
 		// "extensions":     types.MapType{ElemType: types.StringType},
 		"depends_on": types.MapType{
@@ -416,6 +417,10 @@ func (m Service) Value() attr.Value {
 		commands = c
 	}
 
+	if e, diag := m.Entrypoint.ToListValue(context.Background()); !diag.HasError() {
+		entrypoints = e
+	}
+
 	if p, diag := m.Ports.ToListValue(context.Background()); !diag.HasError() {
 		ports = p
 	}
@@ -491,7 +496,7 @@ func (m Service) Value() attr.Value {
 		"logging":        logging,
 		"mem_limit":      types.StringValue(m.MemLimit.ValueString()),
 		"network_mode":   types.StringValue(m.NetworkMode.ValueString()),
-		"network":        networks,
+		"networks":       networks,
 		"ports":          ports,
 		"privileged":     types.BoolValue(m.Privileged.ValueBool()),
 		"replicas":       types.Int64Value(m.Replicas.ValueInt64()),
@@ -500,12 +505,12 @@ func (m Service) Value() attr.Value {
 		"security_opt":   securityOpt,
 		"sysctls":        sysctls,
 		"tmpfs":          tmpfs,
-		"ulimit":         ulimits,
+		"ulimits":        ulimits,
 		"user":           types.StringValue(m.User.ValueString()),
 		"pid":            types.StringValue(m.Pid.ValueString()),
 		"userns_mode":    types.StringValue(m.UserNSMode.ValueString()),
 		"platform":       types.StringValue(m.Platform.ValueString()),
-		"volume":         volumes,
+		"volumes":        volumes,
 	})
 }
 
@@ -978,11 +983,41 @@ func (m *Service) FromComposeConfig(
 ) (d diag.Diagnostics) {
 	d = []diag.Diagnostic{}
 
-	m.ContainerName = types.StringValue(service.ContainerName)
-	m.HostName = types.StringValue(service.Hostname)
-	m.DomainName = types.StringValue(service.DomainName)
-	m.MemLimit = types.StringValue(fmt.Sprintf("%d", service.MemLimit))
+	m.Capabilities = types.ObjectNull(Capabilities{}.AttrType())
+	m.CapAdd = types.ListNull(types.StringType)
+	m.CapDrop = types.ListNull(types.StringType)
+	m.Command = types.ListNull(types.StringType)
+	m.Configs = types.ListNull(ServiceConfig{}.ModelType())
+	m.Dependencies = types.MapNull(ServiceDependency{}.ModelType())
+	m.DNS = types.ListNull(types.StringType)
+	m.Entrypoint = types.ListNull(types.StringType)
+	m.Environment = types.MapNull(types.StringType)
+	m.ExtraHosts = types.MapNull(types.StringType)
+	m.HealthCheck = types.ObjectNull(HealthCheck{}.AttrType())
+	m.Labels = types.MapNull(types.StringType)
+	m.Logging = types.ObjectNull(Logging{}.AttrType())
+	m.Networks = types.MapNull(ServiceNetwork{}.ModelType())
+	m.Ports = types.ListNull(Port{}.ModelType())
+	m.Secrets = types.ListNull(ServiceConfig{}.ModelType())
+	m.SecurityOpt = types.ListNull(types.StringType)
+	m.Sysctls = types.MapNull(types.StringType)
+	m.Tmpfs = types.ListNull(types.StringType)
+	m.Ulimits = types.MapNull(Ulimit{}.ModelType())
+	m.Volumes = types.ListNull(ServiceVolume{}.ModelType())
+
 	m.Init = types.BoolPointerValue(service.Init)
+
+	if service.ContainerName != "" {
+		m.ContainerName = types.StringValue(service.ContainerName)
+	}
+
+	if service.Hostname != "" {
+		m.HostName = types.StringValue(service.Hostname)
+	}
+
+	if service.DomainName != "" {
+		m.DomainName = types.StringValue(service.DomainName)
+	}
 
 	if service.Image != "" {
 		m.Image = types.StringValue(service.Image)
@@ -1024,14 +1059,11 @@ func (m *Service) FromComposeConfig(
 		}
 	}
 
-	if m.Ulimits.IsNull() || m.Ulimits.IsUnknown() {
-		m.Ulimits = types.MapNull(Ulimit{}.ModelType())
-	}
-
 	if len(service.Ulimits) > 0 {
 		ulimits := map[string]attr.Value{}
 		for k, v := range service.Ulimits {
 			ulimit := types.ObjectValueMust(Ulimit{}.AttrType(), map[string]attr.Value{
+				"name":  types.StringValue(k),
 				"value": types.Int64Value(int64(v.Single)),
 				"soft":  types.Int64Value(int64(v.Soft)),
 				"hard":  types.Int64Value(int64(v.Hard)),
@@ -1055,16 +1087,23 @@ func (m *Service) FromComposeConfig(
 		volumes := []ServiceVolume{}
 		for _, v := range service.Volumes {
 			volume := ServiceVolume{
-				Source:   types.StringValue(v.Source),
-				Target:   types.StringValue(v.Target),
-				ReadOnly: types.BoolValue(v.ReadOnly),
-				Type:     types.StringValue(v.Type),
+				Source: types.StringValue(v.Source),
+				Target: types.StringValue(v.Target),
+				Type:   types.StringValue(v.Type),
+			}
+			if v.ReadOnly {
+				volume.ReadOnly = types.BoolValue(true)
 			}
 			if v.Bind != nil {
-				bind := VolumeBind{
-					Propagation:    types.StringValue(v.Bind.Propagation),
-					CreateHostPath: types.BoolValue(v.Bind.CreateHostPath),
-					SELinux:        types.StringValue(v.Bind.SELinux),
+				bind := VolumeBind{}
+				if v.Bind.Propagation != "" {
+					bind.Propagation = types.StringValue(v.Bind.Propagation)
+				}
+				if v.Bind.CreateHostPath {
+					bind.CreateHostPath = types.BoolValue(true)
+				}
+				if v.Bind.SELinux != "" {
+					bind.SELinux = types.StringValue(v.Bind.SELinux)
 				}
 				bindValue, diags := types.ObjectValueFrom(ctx, VolumeBind{}.AttrType(), bind)
 
@@ -1131,11 +1170,15 @@ func (m *Service) FromComposeConfig(
 			config := ServiceConfig{
 				Source: types.StringValue(v.Source),
 				Target: types.StringValue(v.Target),
-				UID:    types.StringValue(v.UID),
-				GID:    types.StringValue(v.GID),
+			}
+			if v.UID != "" {
+				config.UID = types.StringValue(v.UID)
+			}
+			if v.GID != "" {
+				config.GID = types.StringValue(v.GID)
 			}
 			if v.Mode != nil {
-				config.Mode = types.StringValue(fmt.Sprintf("%d", *v.Mode))
+				config.Mode = types.StringValue(fmt.Sprintf("%04d", *v.Mode))
 			}
 			configs = append(configs, config)
 		}
@@ -1154,16 +1197,20 @@ func (m *Service) FromComposeConfig(
 			secret := ServiceConfig{
 				Source: types.StringValue(v.Source),
 				Target: types.StringValue(v.Target),
-				UID:    types.StringValue(v.UID),
-				GID:    types.StringValue(v.GID),
+			}
+			if v.UID != "" {
+				secret.UID = types.StringValue(v.UID)
+			}
+			if v.GID != "" {
+				secret.GID = types.StringValue(v.GID)
 			}
 			if v.Mode != nil {
-				secret.Mode = types.StringValue(fmt.Sprintf("%d", *v.Mode))
+				secret.Mode = types.StringValue(fmt.Sprintf("%04d", *v.Mode))
 			}
 			secrets = append(secrets, secret)
 		}
 
-		secretsValue, diags := types.ListValueFrom(ctx, Secret{}.ModelType(), secrets)
+		secretsValue, diags := types.ListValueFrom(ctx, ServiceConfig{}.ModelType(), secrets)
 		if diags.HasError() {
 			d = append(d, diags...)
 		} else {
@@ -1172,6 +1219,7 @@ func (m *Service) FromComposeConfig(
 	}
 
 	healthCheck := HealthCheck{
+		Test:          types.ListNull(types.StringType),
 		Interval:      timetypes.NewGoDurationNull(),
 		Timeout:       timetypes.NewGoDurationNull(),
 		StartInterval: timetypes.NewGoDurationNull(),
@@ -1219,13 +1267,14 @@ func (m *Service) FromComposeConfig(
 		}
 	}
 
-	healthCheckValue, diags := types.ObjectValueFrom(ctx, HealthCheck{}.AttrType(), healthCheck)
-	if diags.HasError() {
-		d = append(d, diags...)
-	} else {
-		m.HealthCheck = healthCheckValue
+	if service.HealthCheck != nil {
+		healthCheckValue, diags := types.ObjectValueFrom(ctx, HealthCheck{}.AttrType(), healthCheck)
+		if diags.HasError() {
+			d = append(d, diags...)
+		} else {
+			m.HealthCheck = healthCheckValue
+		}
 	}
-	m.HealthCheck = healthCheckValue
 
 	if len(service.Entrypoint) > 0 {
 		entrypoints, diags := types.ListValueFrom(ctx, types.StringType, service.Entrypoint)
@@ -1245,21 +1294,30 @@ func (m *Service) FromComposeConfig(
 		}
 	}
 
-	if m.Command.IsNull() || m.Command.IsUnknown() {
-		m.Command = types.ListNull(types.StringType)
+	if service.Scale != nil || (service.Deploy != nil && service.Deploy.Replicas != nil) {
+		scale := service.GetScale()
+		if scale != 1 {
+			m.Replicas = types.Int64Value(int64(scale))
+		}
 	}
 
 	if len(service.Ports) > 0 {
 		ports := []Port{}
 		for _, v := range service.Ports {
 			port := Port{
-				Name:        types.StringValue(v.Name),
-				Target:      types.Int64Value(int64(v.Target)),
-				Published:   types.StringValue(v.Published),
-				Protocol:    types.StringValue(v.Protocol),
-				AppProtocol: types.StringValue(v.AppProtocol),
-				Mode:        types.StringValue(v.Mode),
-				HostIP:      types.StringValue(v.HostIP),
+				Target:    types.Int64Value(int64(v.Target)),
+				Published: types.StringValue(v.Published),
+				Protocol:  types.StringValue(v.Protocol),
+				HostIP:    types.StringValue(v.HostIP),
+			}
+			if v.Name != "" {
+				port.Name = types.StringValue(v.Name)
+			}
+			if v.AppProtocol != "" {
+				port.AppProtocol = types.StringValue(v.AppProtocol)
+			}
+			if v.Mode != "" {
+				port.Mode = types.StringValue(v.Mode)
 			}
 			ports = append(ports, port)
 		}
@@ -1272,10 +1330,6 @@ func (m *Service) FromComposeConfig(
 		}
 	}
 
-	if m.Ports.IsNull() || m.Ports.IsUnknown() {
-		m.Ports = types.ListNull(Port{}.ModelType())
-	}
-
 	if service.NetworkMode != "" {
 		m.NetworkMode = types.StringValue(service.NetworkMode)
 	}
@@ -1284,14 +1338,25 @@ func (m *Service) FromComposeConfig(
 		networks := map[string]ServiceNetwork{}
 		for k, v := range service.Networks {
 			network := ServiceNetwork{
-				Name:         types.StringValue(k),
 				Aliases:      types.SetNull(types.StringType),
-				Ipv4Address:  types.StringValue(v.Ipv4Address),
-				Ipv6Address:  types.StringValue(v.Ipv6Address),
 				LinkLocalIPs: types.SetNull(types.StringType),
-				MacAddress:   types.StringValue(v.MacAddress),
 				DriverOpts:   types.MapNull(types.StringType),
-				Priority:     types.Int64Value(int64(v.Priority)),
+			}
+
+			if v.Ipv4Address != "" {
+				network.Ipv4Address = types.StringValue(v.Ipv4Address)
+			}
+
+			if v.Ipv6Address != "" {
+				network.Ipv6Address = types.StringValue(v.Ipv6Address)
+			}
+
+			if v.MacAddress != "" {
+				network.MacAddress = types.StringValue(v.MacAddress)
+			}
+
+			if v.Priority != 0 {
+				network.Priority = types.Int64Value(int64(v.Priority))
 			}
 
 			if v.DriverOpts != nil {
@@ -1322,14 +1387,19 @@ func (m *Service) FromComposeConfig(
 				}
 			}
 
-			if v.Aliases != nil {
-				if len(v.Aliases) > 0 {
-					aliasesValue, diags := types.SetValueFrom(ctx, types.StringType, v.Aliases)
-					if diags.HasError() {
-						d = append(d, diags...)
-					} else {
-						network.Aliases = aliasesValue
-					}
+			if len(v.Aliases) > 0 {
+				aliasesValue, diags := types.SetValueFrom(ctx, types.StringType, v.Aliases)
+				if diags.HasError() {
+					d = append(d, diags...)
+				} else {
+					network.Aliases = aliasesValue
+				}
+			} else if service.Name != "" {
+				aliasesValue, diags := types.SetValueFrom(ctx, types.StringType, []string{service.Name})
+				if diags.HasError() {
+					d = append(d, diags...)
+				} else {
+					network.Aliases = aliasesValue
 				}
 			}
 
@@ -1344,7 +1414,9 @@ func (m *Service) FromComposeConfig(
 		}
 	}
 
-	m.Privileged = types.BoolValue(service.Privileged)
+	if service.Privileged {
+		m.Privileged = types.BoolValue(true)
+	}
 
 	if len(service.Tmpfs) > 0 {
 		tmpfsValue, diags := types.ListValueFrom(ctx, types.StringType, service.Tmpfs)
@@ -1359,6 +1431,7 @@ func (m *Service) FromComposeConfig(
 		ulimits := map[string]Ulimit{}
 		for k, v := range service.Ulimits {
 			ulimit := Ulimit{
+				Name:  types.StringValue(k),
 				Value: types.Int64Value(int64(v.Single)),
 				Soft:  types.Int64Value(int64(v.Soft)),
 				Hard:  types.Int64Value(int64(v.Hard)),
@@ -1408,6 +1481,31 @@ func (m *Service) FromComposeConfig(
 
 	if service.Restart != "" {
 		m.Restart = types.StringValue(service.Restart)
+	}
+
+	if len(service.SecurityOpt) > 0 {
+		securityOptsValue, diags := types.ListValueFrom(ctx, types.StringType, service.SecurityOpt)
+		if diags.HasError() {
+			d = append(d, diags...)
+		} else {
+			m.SecurityOpt = securityOptsValue
+		}
+	}
+
+	if service.User != "" {
+		m.User = types.StringValue(service.User)
+	}
+
+	if service.Pid != "" {
+		m.Pid = types.StringValue(service.Pid)
+	}
+
+	if service.UserNSMode != "" {
+		m.UserNSMode = types.StringValue(service.UserNSMode)
+	}
+
+	if service.Platform != "" {
+		m.Platform = types.StringValue(service.Platform)
 	}
 
 	if service.CapAdd != nil || service.CapDrop != nil {
