@@ -22,8 +22,15 @@ A Terraform provider for managing [Synology NAS](https://www.synology.com/dsm/so
 - **Certificate Import**: Import and update DSM certificates from NAS-side PEM files
 - **Certificate Binding**: Bind DSM services and reverse proxies to certificates
 - **OIDC SSO**: Manage the DSM OpenID Connect SSO client declaratively
+- **NFS Share Privileges**: Manage the full DSM NFS export rule set for a shared folder
 - **Task Run**: Trigger an existing DSM scheduled task once from Terraform
 - **Path Lookup**: Read and optionally wait for File Station paths
+
+### NFS Exports
+
+Per-share DSM NFS exports can be managed with `synology_core_share_nfs_privilege`.
+See the generated resource documentation in [docs/resources/core_share_nfs_privilege.md](./docs/resources/core_share_nfs_privilege.md)
+and the usage example in [examples/resources/synology_core_share_nfs_privilege/resource.tf](./examples/resources/synology_core_share_nfs_privilege/resource.tf).
 
 ### Architecture
 
