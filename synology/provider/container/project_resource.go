@@ -5,13 +5,13 @@ import (
 	"fmt"
 	pathpkg "path"
 	"reflect"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
 	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/modifier"
+	providercore "github.com/florianehmke/terraform-provider-synology/synology/provider/core"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -30,7 +30,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	client "github.com/synology-community/go-synology"
-	"github.com/synology-community/go-synology/pkg/api/core"
+	synocore "github.com/synology-community/go-synology/pkg/api/core"
 	"github.com/synology-community/go-synology/pkg/api/docker"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
@@ -46,7 +46,7 @@ func NewProjectResource() resource.Resource {
 type ProjectResource struct {
 	client     docker.Api
 	fsClient   filestation.Api
-	coreClient core.Api
+	coreClient synocore.Api
 }
 
 const projectDescription = `Manages Docker Compose projects using Synology Container Manager.
@@ -362,37 +362,13 @@ func (f *ProjectResource) ensureProjectShare(ctx context.Context, sharePath stri
 
 	share := folderParts[1]
 
-	shares, err := f.coreClient.ShareList(ctx)
-	if err != nil {
+	if err := providercore.EnsureShareExists(ctx, f.coreClient, share); err != nil {
 		return err
-	}
-
-	i := slices.IndexFunc(shares.Shares, func(s core.Share) bool {
-		return s.Name == share
-	})
-
-	if i == -1 {
-		volresp, err := f.coreClient.VolumeList(ctx)
-		if err != nil {
-			return err
-		}
-
-		vol := volresp.Volumes[0]
-
-		volPath := vol.VolumePath
-
-		err = f.coreClient.ShareCreate(ctx, core.ShareInfo{
-			Name:    share,
-			VolPath: volPath,
-		})
-		if err != nil {
-			return err
-		}
 	}
 
 	folderName := folderParts[plen-1]
 	folderPath := strings.Join(folderParts[:plen-1], "/")
-	_, err = f.fsClient.Get(ctx, sharePath)
+	_, err := f.fsClient.Get(ctx, sharePath)
 	if err != nil {
 		switch err.(type) {
 		case filestation.FileNotFoundError:
