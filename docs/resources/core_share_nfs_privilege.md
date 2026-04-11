@@ -25,7 +25,7 @@ resource "synology_core_share_nfs_privilege" "media" {
   rules {
     client      = "10.1.0.0/24"
     privilege   = "rw"
-    root_squash = "no_root_squash"
+    root_squash = "root"
     async       = true
     crossmnt    = true
     insecure    = true
@@ -38,7 +38,7 @@ resource "synology_core_share_nfs_privilege" "media" {
   rules {
     client      = "10.1.0.42"
     privilege   = "ro"
-    root_squash = "root_squash"
+    root_squash = "root"
 
     security_flavor {
       kerberos_integrity = true
@@ -68,6 +68,7 @@ resource "synology_core_share_nfs_privilege" "media" {
 Required:
 
 - `client` (String) Client host, IP, CIDR, or wildcard accepted by DSM for this NFS rule.
+- `root_squash` (String) DSM API root squash value for the client rule, using the raw keyword DSM returns for the export, for example `root`.
 
 Optional:
 
@@ -75,7 +76,6 @@ Optional:
 - `crossmnt` (Boolean) Whether the client may access mounted subfolders beneath the share export.
 - `insecure` (Boolean) Whether DSM should allow client connections from non-privileged ports.
 - `privilege` (String) DSM NFS access privilege for the client. Supported values are `ro` and `rw`.
-- `root_squash` (String) DSM API root squash value for the client rule, for example `no_root_squash` or `root_squash`.
 - `security_flavor` (Attributes) Security flavors accepted for this client rule. If omitted, the resource defaults to `sys = true`. (see [below for nested schema](#nestedatt--rules--security_flavor))
 
 <a id="nestedatt--rules--security_flavor"></a>

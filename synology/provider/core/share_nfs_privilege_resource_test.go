@@ -19,7 +19,7 @@ func TestShareNFSPrivilegeModelRoundTrip(t *testing.T) {
 			{
 				Client:     "10.1.0.0/24",
 				Privilege:  "rw",
-				RootSquash: "no_root_squash",
+				RootSquash: "root",
 				Async:      true,
 				Crossmnt:   true,
 				Insecure:   true,
@@ -30,7 +30,7 @@ func TestShareNFSPrivilegeModelRoundTrip(t *testing.T) {
 			{
 				Client:     "10.1.0.42",
 				Privilege:  "ro",
-				RootSquash: "root_squash",
+				RootSquash: "admin",
 				Async:      false,
 				Crossmnt:   false,
 				Insecure:   false,
@@ -74,7 +74,7 @@ func TestShareNFSPrivilegeRuleDefaultsSecurityFlavorToSys(t *testing.T) {
 	ruleObject, diags := shareNFSPrivilegeRuleModel{
 		Client:         types.StringValue("10.1.0.0/24"),
 		Privilege:      types.StringValue("rw"),
-		RootSquash:     types.StringValue("no_root_squash"),
+		RootSquash:     types.StringValue("root"),
 		Async:          types.BoolValue(false),
 		Crossmnt:       types.BoolValue(false),
 		Insecure:       types.BoolValue(false),
@@ -118,7 +118,7 @@ func TestShareNFSPrivilegeRuleRejectsEmptySecurityFlavor(t *testing.T) {
 	ruleObject, diags := shareNFSPrivilegeRuleModel{
 		Client:         types.StringValue("10.1.0.0/24"),
 		Privilege:      types.StringValue("rw"),
-		RootSquash:     types.StringValue("no_root_squash"),
+		RootSquash:     types.StringValue("root"),
 		Async:          types.BoolValue(false),
 		Crossmnt:       types.BoolValue(false),
 		Insecure:       types.BoolValue(false),

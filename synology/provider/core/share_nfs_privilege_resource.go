@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -189,13 +188,6 @@ current DSM NFS rule set with the Terraform-managed list.`,
 			"rules": schema.ListNestedAttribute{
 				MarkdownDescription: "Ordered NFS privilege rules for the share. This resource manages the full ordered list.",
 				Optional:            true,
-				Computed:            true,
-				Default: listdefault.StaticValue(
-					types.ListValueMust(
-						types.ObjectType{AttrTypes: shareNFSPrivilegeRuleModel{}.AttrType()},
-						[]attr.Value{},
-					),
-				),
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"client": schema.StringAttribute{
@@ -215,10 +207,8 @@ current DSM NFS rule set with the Terraform-managed list.`,
 							},
 						},
 						"root_squash": schema.StringAttribute{
-							MarkdownDescription: "DSM API root squash value for the client rule, for example `no_root_squash` or `root_squash`.",
-							Optional:            true,
-							Computed:            true,
-							Default:             stringdefault.StaticString("no_root_squash"),
+							MarkdownDescription: "DSM API root squash value for the client rule, using the raw keyword DSM returns for the export, for example `root`.",
+							Required:            true,
 							Validators: []validator.String{
 								stringvalidator.LengthAtLeast(1),
 							},
@@ -301,16 +291,10 @@ func (r *ShareNFSPrivilegeResource) Create(
 		return
 	}
 
-	state, err, diags := r.readModel(ctx, payload.ShareName)
-	resp.Diagnostics.Append(diags...)
+	state, diags := normalizedShareNFSPrivilegeState(plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err != nil {
-		resp.Diagnostics.AddError("Failed to load NFS share privileges", err.Error())
-		return
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -364,16 +348,10 @@ func (r *ShareNFSPrivilegeResource) Update(
 		return
 	}
 
-	state, err, diags := r.readModel(ctx, payload.ShareName)
-	resp.Diagnostics.Append(diags...)
+	state, diags := normalizedShareNFSPrivilegeState(plan)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err != nil {
-		resp.Diagnostics.AddError("Failed to load NFS share privileges", err.Error())
-		return
-	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -419,7 +397,7 @@ func (r *ShareNFSPrivilegeResource) Configure(
 	}
 
 	r.client = client
-	r.coreClient = synocore.New(client)
+	r.coreClient = client.CoreAPI()
 }
 
 func (r *ShareNFSPrivilegeResource) ImportState(
@@ -500,6 +478,22 @@ func (r *ShareNFSPrivilegeResource) readModel(
 
 	state, modelDiags := shareNFSPrivilegeModelFromAPI(payload)
 	return state, nil, modelDiags
+}
+
+func normalizedShareNFSPrivilegeState(
+	plan ShareNFSPrivilegeResourceModel,
+) (ShareNFSPrivilegeResourceModel, diag.Diagnostics) {
+	var diags diag.Diagnostics
+
+	if plan.Rules.IsNull() || plan.Rules.IsUnknown() {
+		plan.Rules = types.ListValueMust(
+			types.ObjectType{AttrTypes: shareNFSPrivilegeRuleModel{}.AttrType()},
+			[]attr.Value{},
+		)
+	}
+
+	plan.ID = types.StringValue(plan.ShareName.ValueString())
+	return plan, diags
 }
 
 func shareNFSPrivilegeModelFromAPI(
