@@ -33,7 +33,7 @@ description: |-
     }
   }
   
-  See examples/resources/synology_api https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_api for more examples.
+  See examples/resources/synology_api https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_api for more examples.
 ---
 
 # Api: (Resource)
@@ -73,7 +73,7 @@ resource "synology_api" "cleanup" {
 }
 ```
 
-See [examples/resources/synology_api](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_api) for more examples.
+See [examples/resources/synology_api](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_api) for more examples.
 
 ## Example Usage
 

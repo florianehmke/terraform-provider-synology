@@ -3,11 +3,15 @@ package container
 import (
 	"context"
 	"fmt"
+	pathpkg "path"
 	"reflect"
-	"slices"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/models"
+	"github.com/florianehmke/terraform-provider-synology/synology/provider/container/modifier"
+	providercore "github.com/florianehmke/terraform-provider-synology/synology/provider/core"
 	"github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -26,12 +30,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	client "github.com/synology-community/go-synology"
-	"github.com/synology-community/go-synology/pkg/api/core"
+	synocore "github.com/synology-community/go-synology/pkg/api/core"
 	"github.com/synology-community/go-synology/pkg/api/docker"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/container/models"
-	"github.com/synology-community/terraform-provider-synology/synology/provider/container/modifier"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -44,7 +46,7 @@ func NewProjectResource() resource.Resource {
 type ProjectResource struct {
 	client     docker.Api
 	fsClient   filestation.Api
-	coreClient core.Api
+	coreClient synocore.Api
 }
 
 const projectDescription = `Manages Docker Compose projects using Synology Container Manager.
@@ -113,8 +115,15 @@ resource "synology_container_project" "web_app" {
 }
 ` + "```" + `
 
-See [examples/resources/synology_container_project](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_container_project) for more examples.
+See [examples/resources/synology_container_project](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_container_project) for more examples.
 `
+
+var projectServicePortalAttrTypes = map[string]attr.Type{
+	"enable":   types.BoolType,
+	"name":     types.StringType,
+	"port":     types.Int64Type,
+	"protocol": types.StringType,
+}
 
 func projectExists(err error) bool {
 	errs, ok := err.(*multierror.Error)
@@ -129,6 +138,91 @@ func projectExists(err error) bool {
 	}
 
 	return false
+}
+
+func projectStreamSucceeded(err error) bool {
+	if err == nil {
+		return true
+	}
+
+	msg := err.Error()
+	if !strings.Contains(msg, "unable to decode response:") {
+		return false
+	}
+
+	lines := strings.Split(msg, "\n")
+	foundExitCode := false
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "Exit Code:") {
+			continue
+		}
+
+		foundExitCode = true
+
+		code, parseErr := strconv.Atoi(strings.TrimSpace(strings.TrimPrefix(line, "Exit Code:")))
+		if parseErr != nil || code != 0 {
+			return false
+		}
+	}
+
+	return foundExitCode
+}
+
+func normalizeProjectStreamError(err error) error {
+	if projectStreamSucceeded(err) {
+		return nil
+	}
+
+	return err
+}
+
+func projectServicePortalValue(
+	ctx context.Context,
+	proj *docker.Project,
+) (types.Object, diag.Diagnostics) {
+	if !proj.EnableServicePortal &&
+		proj.ServicePortalName == "" &&
+		proj.ServicePortalPort == 0 &&
+		proj.ServicePortalProtocol == "" {
+		return types.ObjectNull(projectServicePortalAttrTypes), nil
+	}
+
+	servicePortal := models.ServicePortal{
+		Enable:   types.BoolValue(proj.EnableServicePortal),
+		Name:     types.StringValue(proj.ServicePortalName),
+		Port:     types.Int64Value(int64(proj.ServicePortalPort)),
+		Protocol: types.StringValue(proj.ServicePortalProtocol),
+	}
+
+	return types.ObjectValueFrom(ctx, projectServicePortalAttrTypes, servicePortal)
+}
+
+func syncProjectModelFromRemote(
+	ctx context.Context,
+	model *models.ProjectResourceModel,
+	proj *docker.Project,
+) diag.Diagnostics {
+	diags := diag.Diagnostics{}
+
+	servicePortal, servicePortalDiags := projectServicePortalValue(ctx, proj)
+	diags.Append(servicePortalDiags...)
+	model.ServicePortal = servicePortal
+
+	model.Status = types.StringValue(proj.Status)
+	model.CreatedAt = timetypes.NewRFC3339TimeValue(proj.CreatedAt)
+	model.UpdatedAt = timetypes.NewRFC3339TimeValue(proj.UpdatedAt)
+
+	if proj.Content != "" {
+		model.Content = types.StringValue(proj.Content)
+	} else {
+		model.Content = types.StringNull()
+	}
+
+	diags.Append(models.HydrateProjectResourceModelFromContent(ctx, model, proj.Content)...)
+
+	return diags
 }
 
 func (f *ProjectResource) handleConfigs(
@@ -207,6 +301,57 @@ func (f *ProjectResource) handleSecrets(
 	return
 }
 
+func (f *ProjectResource) refreshProjectConfigContent(
+	ctx context.Context,
+	data *models.ProjectResourceModel,
+) (diags diag.Diagnostics) {
+	if data.SharePath.IsNull() ||
+		data.SharePath.IsUnknown() ||
+		data.Configs.IsNull() ||
+		data.Configs.IsUnknown() {
+		return
+	}
+
+	elements := map[string]models.Config{}
+	diags = data.Configs.ElementsAs(ctx, &elements, true)
+	if diags.HasError() {
+		return
+	}
+
+	changed := false
+	for key, cfg := range elements {
+		if cfg.File.IsNull() || cfg.File.IsUnknown() || cfg.File.ValueString() == "" {
+			continue
+		}
+
+		filePath := pathpkg.Join(data.SharePath.ValueString(), cfg.File.ValueString())
+		file, err := f.fsClient.Download(ctx, filePath, "download")
+		if err != nil {
+			diags.AddError(
+				"Failed to refresh project config content",
+				fmt.Sprintf("Unable to download config %q from %q: %s", key, filePath, err),
+			)
+			return
+		}
+
+		cfg.Content = types.StringValue(file.Content)
+		elements[key] = cfg
+		changed = true
+	}
+
+	if !changed {
+		return
+	}
+
+	configs, mapDiags := types.MapValueFrom(ctx, models.Config{}.ModelType(), elements)
+	diags.Append(mapDiags...)
+	if !diags.HasError() {
+		data.Configs = configs
+	}
+
+	return
+}
+
 func (f *ProjectResource) ensureProjectShare(ctx context.Context, sharePath string) error {
 	folderParts := strings.Split(sharePath, "/")
 	plen := len(folderParts)
@@ -217,37 +362,13 @@ func (f *ProjectResource) ensureProjectShare(ctx context.Context, sharePath stri
 
 	share := folderParts[1]
 
-	shares, err := f.coreClient.ShareList(ctx)
-	if err != nil {
+	if err := providercore.EnsureShareExists(ctx, f.coreClient, share); err != nil {
 		return err
-	}
-
-	i := slices.IndexFunc(shares.Shares, func(s core.Share) bool {
-		return s.Name == share
-	})
-
-	if i == -1 {
-		volresp, err := f.coreClient.VolumeList(ctx)
-		if err != nil {
-			return err
-		}
-
-		vol := volresp.Volumes[0]
-
-		volPath := vol.VolumePath
-
-		err = f.coreClient.ShareCreate(ctx, core.ShareInfo{
-			Name:    share,
-			VolPath: volPath,
-		})
-		if err != nil {
-			return err
-		}
 	}
 
 	folderName := folderParts[plen-1]
 	folderPath := strings.Join(folderParts[:plen-1], "/")
-	_, err = f.fsClient.Get(ctx, sharePath)
+	_, err := f.fsClient.Get(ctx, sharePath)
 	if err != nil {
 		switch err.(type) {
 		case filestation.FileNotFoundError:
@@ -356,6 +477,7 @@ func (f *ProjectResource) Create(
 			_, err = f.client.ProjectStopStream(ctx, docker.ProjectStreamRequest{
 				ID: data.ID.ValueString(),
 			})
+			err = normalizeProjectStreamError(err)
 			if err != nil {
 				resp.Diagnostics.AddError("Failed to stop project", err.Error())
 				return
@@ -364,6 +486,7 @@ func (f *ProjectResource) Create(
 			_, err = f.client.ProjectCleanStream(ctx, docker.ProjectStreamRequest{
 				ID: data.ID.ValueString(),
 			})
+			err = normalizeProjectStreamError(err)
 			if err != nil {
 				resp.Diagnostics.AddError("Failed to clean project", err.Error())
 				return
@@ -372,6 +495,7 @@ func (f *ProjectResource) Create(
 				_, err = f.client.ProjectBuildStream(ctx, docker.ProjectStreamRequest{
 					ID: data.ID.ValueString(),
 				})
+				err = normalizeProjectStreamError(err)
 				if err != nil {
 					resp.Diagnostics.AddError("Failed to build project", err.Error())
 					return
@@ -400,6 +524,7 @@ func (f *ProjectResource) Create(
 		_, err = f.client.ProjectBuildStream(ctx, docker.ProjectStreamRequest{
 			ID: data.ID.ValueString(),
 		})
+		err = normalizeProjectStreamError(err)
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to build project after update", err.Error())
 			return
@@ -412,12 +537,12 @@ func (f *ProjectResource) Create(
 		return
 	}
 
-	data.Status = types.StringValue(proj.Status)
-	data.UpdatedAt = timetypes.NewRFC3339TimeValue(proj.UpdatedAt)
-
 	data.Metadata = types.MapValueMust(types.StringType, map[string]attr.Value{})
-
-	// data.Content = types.StringValue(proj.Content)
+	resp.Diagnostics.Append(syncProjectModelFromRemote(ctx, &data, proj)...)
+	resp.Diagnostics.Append(f.refreshProjectConfigContent(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -447,6 +572,7 @@ func (f *ProjectResource) Delete(
 		_, err = f.client.ProjectStopStream(ctx, docker.ProjectStreamRequest{
 			ID: data.ID.ValueString(),
 		})
+		err = normalizeProjectStreamError(err)
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to stop project during deletion", err.Error())
 			return
@@ -456,6 +582,7 @@ func (f *ProjectResource) Delete(
 	_, err = f.client.ProjectCleanStream(ctx, docker.ProjectStreamRequest{
 		ID: data.ID.ValueString(),
 	})
+	err = normalizeProjectStreamError(err)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to clean project for deletion", err.Error())
 		return
@@ -505,41 +632,10 @@ func (f *ProjectResource) Read(
 		}
 	}
 
-	servicePortalType := map[string]attr.Type{
-		"enable":   types.BoolType,
-		"name":     types.StringType,
-		"port":     types.Int64Type,
-		"protocol": types.StringType,
-	}
-
-	servicePortalValues := types.ObjectNull(servicePortalType)
-	if proj.EnableServicePortal || proj.ServicePortalName != "" || proj.ServicePortalPort != 0 ||
-		proj.ServicePortalProtocol != "" {
-		servicePortal := models.ServicePortal{
-			Enable:   types.BoolValue(proj.EnableServicePortal),
-			Name:     types.StringValue(proj.ServicePortalName),
-			Port:     types.Int64Value(int64(proj.ServicePortalPort)),
-			Protocol: types.StringValue(proj.ServicePortalProtocol),
-		}
-
-		svcPortalValues, diags := types.ObjectValueFrom(ctx, servicePortalType, servicePortal)
-		if diags.HasError() {
-			resp.Diagnostics.Append(diags...)
-		} else {
-			servicePortalValues = svcPortalValues
-		}
-	}
-	if !servicePortalValues.IsNull() {
-		state.ServicePortal = servicePortalValues
-	}
-
-	state.Status = types.StringValue(proj.Status)
-	state.CreatedAt = timetypes.NewRFC3339TimeValue(proj.CreatedAt)
-	state.UpdatedAt = timetypes.NewRFC3339TimeValue(proj.UpdatedAt)
-	if proj.Content != "" {
-		state.Content = types.StringValue(proj.Content)
-	} else {
-		state.Content = types.StringNull()
+	resp.Diagnostics.Append(syncProjectModelFromRemote(ctx, &state, proj)...)
+	resp.Diagnostics.Append(f.refreshProjectConfigContent(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -656,6 +752,7 @@ func (f *ProjectResource) Update(
 			_, err = f.client.ProjectStopStream(ctx, docker.ProjectStreamRequest{
 				ID: plan.ID.ValueString(),
 			})
+			err = normalizeProjectStreamError(err)
 			if err != nil {
 				resp.Diagnostics.AddError("Failed to stop project", err.Error())
 				return
@@ -689,6 +786,7 @@ func (f *ProjectResource) Update(
 		_, err := f.client.ProjectBuildStream(ctx, docker.ProjectStreamRequest{
 			ID: plan.ID.ValueString(),
 		})
+		err = normalizeProjectStreamError(err)
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to build project", err.Error())
 			return
@@ -698,6 +796,7 @@ func (f *ProjectResource) Update(
 		_, err := f.client.ProjectRestartStream(ctx, docker.ProjectStreamRequest{
 			ID: plan.ID.ValueString(),
 		})
+		err = normalizeProjectStreamError(err)
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to restart project", err.Error())
 			return
@@ -710,10 +809,11 @@ func (f *ProjectResource) Update(
 		return
 	}
 
-	plan.Status = types.StringValue(proj.Status)
-	plan.CreatedAt = timetypes.NewRFC3339TimeValue(proj.CreatedAt)
-	plan.UpdatedAt = timetypes.NewRFC3339TimeValue(proj.UpdatedAt)
-	plan.Content = types.StringValue(proj.Content)
+	resp.Diagnostics.Append(syncProjectModelFromRemote(ctx, &plan, proj)...)
+	resp.Diagnostics.Append(f.refreshProjectConfigContent(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("content"), plan.Content)...)
 	if resp.Diagnostics.HasError() {
@@ -761,6 +861,7 @@ func (f *ProjectResource) Schema(
 				MarkdownDescription: "The content of the project.",
 				Optional:            true,
 				Computed:            true,
+				Sensitive:           true,
 				PlanModifiers: []planmodifier.String{
 					modifier.UseSchemaForUnknownContent(),
 					// stringplanmodifier.UseStateForUnknown(),

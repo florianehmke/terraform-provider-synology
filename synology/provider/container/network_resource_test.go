@@ -3,8 +3,8 @@ package container_test
 import (
 	"testing"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/acctest"
 	r "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/synology-community/terraform-provider-synology/synology/acctest"
 )
 
 const (

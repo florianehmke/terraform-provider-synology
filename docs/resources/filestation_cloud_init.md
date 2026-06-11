@@ -34,7 +34,7 @@ description: |-
     EOF
   }
   
-  See examples/resources/synology_filestation_cloud_init https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_filestation_cloud_init for more examples.
+  See examples/resources/synology_filestation_cloud_init https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_filestation_cloud_init for more examples.
 ---
 
 # Filestation: Cloud Init (Resource)
@@ -75,7 +75,7 @@ resource "synology_filestation_cloud_init" "vm_config" {
 }
 ```
 
-See [examples/resources/synology_filestation_cloud_init](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_filestation_cloud_init) for more examples.
+See [examples/resources/synology_filestation_cloud_init](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_filestation_cloud_init) for more examples.
 
 ## Example Usage
 

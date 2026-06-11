@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/florianehmke/terraform-provider-synology/synology/util"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,7 +17,6 @@ import (
 	client "github.com/synology-community/go-synology"
 	"github.com/synology-community/go-synology/pkg/api/filestation"
 	"github.com/synology-community/go-synology/pkg/util/form"
-	"github.com/synology-community/terraform-provider-synology/synology/util"
 )
 
 type File struct {
@@ -313,7 +313,7 @@ resource "synology_filestation_cloud_init" "vm_config" {
 }
 ` + "```" + `
 
-See [examples/resources/synology_filestation_cloud_init](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_filestation_cloud_init) for more examples.
+See [examples/resources/synology_filestation_cloud_init](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_filestation_cloud_init) for more examples.
 `,
 
 		Attributes: map[string]schema.Attribute{

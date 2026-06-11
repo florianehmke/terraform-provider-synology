@@ -63,7 +63,7 @@ description: |-
     }
   }
   
-  See examples/resources/synology_container_project https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_container_project for more examples.
+  See examples/resources/synology_container_project https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_container_project for more examples.
 ---
 
 # Container: Project (Resource)
@@ -134,7 +134,7 @@ resource "synology_container_project" "web_app" {
 }
 ```
 
-See [examples/resources/synology_container_project](https://github.com/synology-community/terraform-provider-synology/tree/main/examples/resources/synology_container_project) for more examples.
+See [examples/resources/synology_container_project](https://github.com/florianehmke/terraform-provider-synology/tree/main/examples/resources/synology_container_project) for more examples.
 
 ## Example Usage
 
@@ -197,7 +197,7 @@ resource "synology_container_project" "foo" {
 ### Optional
 
 - `configs` (Attributes Map) Docker compose configs. (see [below for nested schema](#nestedatt--configs))
-- `content` (String) The content of the project.
+- `content` (String, Sensitive) The content of the project.
 - `extensions` (Attributes Map) Docker compose extensions. (see [below for nested schema](#nestedatt--extensions))
 - `metadata` (Map of String) The metadata of the project.
 - `networks` (Attributes Map) Docker compose networks. (see [below for nested schema](#nestedatt--networks))
